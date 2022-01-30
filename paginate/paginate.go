@@ -17,6 +17,7 @@ type Pagination struct {
 	status       int
 	showStatus   bool
 	statusField  string
+	searchFields []string
 }
 
 func Paginate(
@@ -33,6 +34,7 @@ func Paginate(
 		status:       0,
 		showStatus:   false,
 		statusField:  "",
+		searchFields: []string{},
 	}
 
 	return pagination
@@ -63,8 +65,9 @@ func (pagination Pagination) RowsPerPage(rows int) Pagination {
 	return pagination
 }
 
-func (pagination Pagination) SearchBy(search string) Pagination {
+func (pagination Pagination) SearchBy(search string, fields ...string) Pagination {
 	pagination.search = search
+	pagination.searchFields = fields
 	return pagination
 }
 
@@ -82,7 +85,10 @@ func (pagination Pagination) Query() (*string, *string, error) {
 	countQuery += pagination.where
 
 	offset := (pagination.page * pagination.itemsPerPage) - pagination.itemsPerPage
-	searchFields := getSearchFieldsBetween(query, "SELECT", "FROM")
+
+	if len(pagination.searchFields) == 0 {
+		pagination.searchFields = getSearchFieldsBetween(query, "SELECT", "FROM")
+	}
 
 	var descs []string
 
@@ -108,7 +114,7 @@ func (pagination Pagination) Query() (*string, *string, error) {
 	}
 
 	if pagination.search != "" {
-		for i, p := range searchFields {
+		for i, p := range pagination.searchFields {
 
 			if i == 0 {
 				countQuery += "and ((" + p + "::TEXT ilike '%" + pagination.search + "%') "
@@ -119,8 +125,11 @@ func (pagination Pagination) Query() (*string, *string, error) {
 			}
 
 		}
-		countQuery += ") "
-		query += ") "
+
+		if len(pagination.searchFields) > 0 {
+			countQuery += ") "
+			query += ") "
+		}
 	}
 
 	if len(pagination.sort) > 0 && pagination.sort[0] != "" {
