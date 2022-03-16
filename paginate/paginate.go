@@ -180,8 +180,9 @@ func generateQueryCount(str string, start string, end string) (result string) {
 				fieldWhithID = field
 				break
 			}
-		} else {
+		} else if strings.Contains(field, ".*") {
 			fieldWhithID = strings.ReplaceAll(field, ".*", ".id")
+			break
 		}
 	}
 
