@@ -7,15 +7,15 @@ import (
 )
 
 func TestPaginate(t *testing.T) {
-	queryString := "SELECT t.id, t.* FROM test t WHERE 1=1  and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
+	queryString := "SELECT t.* FROM test t WHERE 1=1  and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
 	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE 1=1  and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) "
 	query, queryCount, err := paginate.
-		Paginate("SELECT t.id, t.* FROM test t").
+		Paginate("SELECT t.* FROM test t").
 		Sort([]string{"name", "last_name"}).
 		Desc([]string{"true", "false"}).
 		Page(3).
 		RowsPerPage(50).
-		SearchBy("vinicius").
+		SearchBy("vinicius", "t.id").
 		ManageStatusBy("v.status").
 		Query()
 
@@ -28,6 +28,7 @@ func TestPaginate(t *testing.T) {
 
 	if queryString != *query {
 		t.Errorf("Wrong query")
+		return
 	}
 
 	if queryCountString != *queryCount {
@@ -36,15 +37,15 @@ func TestPaginate(t *testing.T) {
 }
 
 func TestPaginateWithArgs(t *testing.T) {
-	queryString := "SELECT t.id, t.* FROM test t WHERE t.name = 'jhon' and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
+	queryString := "SELECT t.* FROM test t WHERE t.name = 'jhon' and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
 	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE t.name = 'jhon' and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) "
 	query, queryCount, err := paginate.
-		Paginate("SELECT t.id, t.* FROM test t").
+		Paginate("SELECT t.* FROM test t").
 		Sort([]string{"name", "last_name"}).
 		Desc([]string{"true", "false"}).
 		Page(3).
 		RowsPerPage(50).
-		SearchBy("vinicius").
+		SearchBy("vinicius", "t.id").
 		ManageStatusBy("v.status").
 		WhereArgs("t.name = 'jhon'").
 		Query()

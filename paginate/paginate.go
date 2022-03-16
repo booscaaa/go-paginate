@@ -155,6 +155,7 @@ func getSearchFieldsBetween(str string, start string, end string) (result []stri
 	a := strings.SplitAfterN(str, start, 2)
 	b := strings.SplitAfterN(a[len(a)-1], end, 2)
 	fields := strings.Split(strings.Replace((b[0][0:len(b[0])-len(end)]), " ", "", -1), ",")
+
 	searchFields := []string{}
 	for _, field := range fields {
 		if !strings.Contains(field, "*") {
@@ -171,6 +172,7 @@ func generateQueryCount(str string, start string, end string) (result string) {
 	columns := b[0][0 : len(b[0])-len(end)]
 
 	fields := strings.Split(strings.Replace((b[0][0:len(b[0])-len(end)]), " ", "", -1), ",")
+
 	fieldWhithID := "id"
 	for _, field := range fields {
 		if !strings.Contains(field, ".*") {
@@ -178,6 +180,8 @@ func generateQueryCount(str string, start string, end string) (result string) {
 				fieldWhithID = field
 				break
 			}
+		} else {
+			fieldWhithID = strings.ReplaceAll(field, ".*", ".id")
 		}
 	}
 
