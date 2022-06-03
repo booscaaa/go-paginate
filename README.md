@@ -40,6 +40,8 @@ go get github.com/booscaaa/go-paginate
 ### Usage
 
 ```go
+
+// OLD VERSION
 import "github.com/booscaaa/go-paginate/paginate"
 
 query, queryCount, err := paginate.
@@ -56,6 +58,22 @@ if err != nil {
 }
 
 // else use the query and queryCount to paginate with pq, pgx or other
+
+
+// NOW USE THIS
+import "github.com/booscaaa/go-paginate/paginate"
+
+pagin := paginate.Instance()
+query, queryCount := pagin.
+    Query("SELECT t.* FROM test t").
+    Sort([]string{"name", "last_name"}).
+    Desc([]string{"true", "false"}).
+    Page(3).
+    RowsPerPage(50).
+    SearchBy("vinicius", "t.id").
+    Select()
+
+// use the query and queryCount to paginate with pq, pgx or other
 ```
 
 ## Contributing
