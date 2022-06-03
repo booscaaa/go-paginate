@@ -7,24 +7,21 @@ import (
 )
 
 func TestPaginate(t *testing.T) {
-	queryString := "SELECT t.* FROM test t WHERE 1=1  and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
-	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE 1=1  and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) "
-	query, queryCount, err := paginate.
-		Paginate("SELECT t.* FROM test t").
+	queryString := "SELECT t.* FROM test t WHERE 1=1 and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
+	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE 1=1 and ((t.id::TEXT ilike '%vinicius%') ) "
+
+	pagin := paginate.Instance()
+	query, queryCount := pagin.
+		Query("SELECT t.* FROM test t").
 		Sort([]string{"name", "last_name"}).
 		Desc([]string{"true", "false"}).
 		Page(3).
 		RowsPerPage(50).
 		SearchBy("vinicius", "t.id").
-		ManageStatusBy("v.status").
-		Query()
+		Select()
 
-	if err != nil {
-		t.Errorf("error was not expected: %s", err)
-	}
-
-	t.Log(*query)
-	t.Log(*queryCount)
+	// t.Log(*query)
+	// t.Log(*queryCount)
 
 	if queryString != *query {
 		t.Errorf("Wrong query")
@@ -37,31 +34,31 @@ func TestPaginate(t *testing.T) {
 }
 
 func TestPaginateWithArgs(t *testing.T) {
-	queryString := "SELECT t.* FROM test t WHERE t.name = 'jhon' and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
-	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE t.name = 'jhon' and v.status = 1 and ((t.id::TEXT ilike '%vinicius%') ) "
-	query, queryCount, err := paginate.
-		Paginate("SELECT t.* FROM test t").
+	queryString := "SELECT t.* FROM test t WHERE t.name = 'jhon' and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
+	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE t.name = 'jhon' and ((t.id::TEXT ilike '%vinicius%') ) "
+
+	pagin := paginate.Instance()
+
+	pagin.Query("SELECT t.* FROM test t").
 		Sort([]string{"name", "last_name"}).
 		Desc([]string{"true", "false"}).
 		Page(3).
-		RowsPerPage(50).
-		SearchBy("vinicius", "t.id").
-		ManageStatusBy("v.status").
-		WhereArgs("t.name = 'jhon'").
-		Query()
+		RowsPerPage(50)
 
-	if err != nil {
-		t.Errorf("error was not expected: %s", err)
+	if 1 == 1 {
+		pagin.WhereArgs("t.name = 'jhon'")
+		pagin.SearchBy("vinicius", "t.id")
+		query, queryCount := pagin.Select()
+		t.Log(*query)
+		t.Log(*queryCount)
+
+		if queryString != *query {
+			t.Errorf("Wrong query")
+		}
+
+		if queryCountString != *queryCount {
+			t.Errorf("Wrong query count")
+		}
 	}
 
-	t.Log(*query)
-	t.Log(*queryCount)
-
-	if queryString != *query {
-		t.Errorf("Wrong query")
-	}
-
-	if queryCountString != *queryCount {
-		t.Errorf("Wrong query count")
-	}
 }

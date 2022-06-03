@@ -2,7 +2,6 @@ package paginate
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -14,25 +13,19 @@ type Pagination struct {
 	page         int
 	itemsPerPage int
 	search       string
-	status       int
-	showStatus   bool
 	statusField  string
 	searchFields []string
 }
 
-func Paginate(
-	query string,
-) Pagination {
+func Instance() Pagination {
 	pagination := Pagination{
-		query:        query,
+		query:        "",
 		where:        " WHERE 1=1 ",
 		sort:         []string{},
 		descending:   []string{},
 		page:         1,
 		itemsPerPage: 10,
 		search:       "",
-		status:       0,
-		showStatus:   false,
 		statusField:  "",
 		searchFields: []string{},
 	}
@@ -40,45 +33,47 @@ func Paginate(
 	return pagination
 }
 
-func (pagination Pagination) WhereArgs(whereArgs string) Pagination {
-	pagination.where = " WHERE " + whereArgs
+func (pagination *Pagination) Query(query string) *Pagination {
+	pagination.query = query
 	return pagination
 }
 
-func (pagination Pagination) Desc(desc []string) Pagination {
+func (pagination *Pagination) WhereArgs(whereArgs string) *Pagination {
+	if strings.Contains(pagination.where, "WHERE 1=1") {
+		pagination.where = " WHERE " + whereArgs + " "
+	} else {
+		pagination.where += " " + whereArgs + " "
+	}
+	return pagination
+}
+
+func (pagination *Pagination) Desc(desc []string) *Pagination {
 	pagination.descending = desc
 	return pagination
 }
 
-func (pagination Pagination) Sort(sort []string) Pagination {
+func (pagination *Pagination) Sort(sort []string) *Pagination {
 	pagination.sort = sort
 	return pagination
 }
 
-func (pagination Pagination) Page(page int) Pagination {
+func (pagination *Pagination) Page(page int) *Pagination {
 	pagination.page = page
 	return pagination
 }
 
-func (pagination Pagination) RowsPerPage(rows int) Pagination {
+func (pagination *Pagination) RowsPerPage(rows int) *Pagination {
 	pagination.itemsPerPage = rows
 	return pagination
 }
 
-func (pagination Pagination) SearchBy(search string, fields ...string) Pagination {
+func (pagination *Pagination) SearchBy(search string, fields ...string) *Pagination {
 	pagination.search = search
 	pagination.searchFields = fields
 	return pagination
 }
 
-func (pagination Pagination) ManageStatusBy(statusField string) Pagination {
-	pagination.showStatus = true
-	pagination.statusField = statusField
-	pagination.status = 1
-	return pagination
-}
-
-func (pagination Pagination) Query() (*string, *string, error) {
+func (pagination Pagination) Select() (*string, *string) {
 	query := pagination.query
 	countQuery := generateQueryCount(query, "SELECT", "FROM")
 	query += pagination.where
@@ -103,13 +98,6 @@ func (pagination Pagination) Query() (*string, *string, error) {
 			} else {
 				descs = append(descs, "ASC")
 			}
-		}
-	}
-
-	if pagination.showStatus {
-		if pagination.status != 0 {
-			query += " and " + pagination.statusField + " = " + strconv.Itoa(pagination.status) + " "
-			countQuery += " and " + pagination.statusField + " = " + strconv.Itoa(pagination.status) + " "
 		}
 	}
 
@@ -148,7 +136,7 @@ func (pagination Pagination) Query() (*string, *string, error) {
 		query += fmt.Sprintf(" LIMIT %v OFFSET %v;", pagination.itemsPerPage, offset)
 	}
 
-	return &query, &countQuery, nil
+	return &query, &countQuery
 }
 
 func getSearchFieldsBetween(str string, start string, end string) (result []string) {
