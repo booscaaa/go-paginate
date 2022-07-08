@@ -6,14 +6,19 @@ import (
 	"github.com/booscaaa/go-paginate/paginate"
 )
 
+type Test struct {
+	Name     string `json:"name"     db:"name"`
+	LastName string `json:"lastName" db:"last_name"`
+}
+
 func TestPaginate(t *testing.T) {
 	queryString := "SELECT t.* FROM test t WHERE 1=1 and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
 	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE 1=1 and ((t.id::TEXT ilike '%vinicius%') ) "
 
-	pagin := paginate.Instance()
+	pagin := paginate.Instance(Test{})
 	query, queryCount := pagin.
 		Query("SELECT t.* FROM test t").
-		Sort([]string{"name", "last_name"}).
+		Sort([]string{"name", "lastName"}).
 		Desc([]string{"true", "false"}).
 		Page(3).
 		RowsPerPage(50).
@@ -37,10 +42,10 @@ func TestPaginateWithArgs(t *testing.T) {
 	queryString := "SELECT t.* FROM test t WHERE t.name = 'jhon' and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
 	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE t.name = 'jhon' and ((t.id::TEXT ilike '%vinicius%') ) "
 
-	pagin := paginate.Instance()
+	pagin := paginate.Instance(Test{})
 
 	pagin.Query("SELECT t.* FROM test t").
-		Sort([]string{"name", "last_name"}).
+		Sort([]string{"name", "lastName"}).
 		Desc([]string{"true", "false"}).
 		Page(3).
 		RowsPerPage(50)

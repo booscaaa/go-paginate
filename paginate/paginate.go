@@ -2,6 +2,7 @@ package paginate
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -15,9 +16,10 @@ type Pagination struct {
 	search       string
 	statusField  string
 	searchFields []string
+	structType   interface{}
 }
 
-func Instance() Pagination {
+func Instance(structType interface{}) Pagination {
 	pagination := Pagination{
 		query:        "",
 		where:        " WHERE 1=1 ",
@@ -28,6 +30,7 @@ func Instance() Pagination {
 		search:       "",
 		statusField:  "",
 		searchFields: []string{},
+		structType:   structType,
 	}
 
 	return pagination
@@ -125,9 +128,9 @@ func (pagination Pagination) Select() (*string, *string) {
 
 		for s, sort := range pagination.sort {
 			if s == len(pagination.sort)-1 {
-				query += sort + " " + descs[s] + ` `
+				query += getFieldName(sort, "json", pagination.structType) + " " + descs[s] + ` `
 			} else {
-				query += sort + " " + descs[s] + `, `
+				query += getFieldName(sort, "json", pagination.structType) + " " + descs[s] + `, `
 			}
 		}
 	}
@@ -175,4 +178,19 @@ func generateQueryCount(str string, start string, end string) (result string) {
 	}
 
 	return strings.ReplaceAll(str, columns, " COUNT("+fieldWhithID+") ")
+}
+
+func getFieldName(tag, key string, s interface{}) (fieldname string) {
+	rt := reflect.TypeOf(s)
+	if rt.Kind() != reflect.Struct {
+		panic("bad type")
+	}
+	for i := 0; i < rt.NumField(); i++ {
+		f := rt.Field(i)
+		v := strings.Split(f.Tag.Get(key), ",")[0] // use split to ignore tag "options" like omitempty, etc.
+		if v == tag {
+			return f.Tag.Get("db")
+		}
+	}
+	return ""
 }
