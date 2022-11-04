@@ -2,6 +2,7 @@ package paginate
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 )
@@ -17,6 +18,7 @@ type Pagination struct {
 	statusField  string
 	searchFields []string
 	structType   interface{}
+	withVacuum   bool
 }
 
 func Instance(structType interface{}) Pagination {
@@ -31,6 +33,7 @@ func Instance(structType interface{}) Pagination {
 		statusField:  "",
 		searchFields: []string{},
 		structType:   structType,
+		withVacuum:   false,
 	}
 
 	return pagination
@@ -76,9 +79,14 @@ func (pagination *Pagination) SearchBy(search string, fields ...string) *Paginat
 	return pagination
 }
 
+func (pagination *Pagination) WithVacuum() *Pagination {
+	pagination.withVacuum = true
+	return pagination
+}
+
 func (pagination Pagination) Select() (*string, *string) {
 	query := pagination.query
-	countQuery := generateQueryCount(query, "SELECT", "FROM")
+	countQuery := generateQueryCount(query, "SELECT", "FROM", pagination.withVacuum)
 	query += pagination.where
 	countQuery += pagination.where
 
@@ -104,22 +112,27 @@ func (pagination Pagination) Select() (*string, *string) {
 		}
 	}
 
-	if pagination.search != "" {
+	if pagination.search != "" && len(pagination.searchFields) > 0 {
 		for i, p := range pagination.searchFields {
-
-			if i == 0 {
-				countQuery += "and ((" + p + "::TEXT ilike '%" + pagination.search + "%') "
-				query += "and ((" + p + "::TEXT ilike '%" + pagination.search + "%') "
-			} else {
-				countQuery += "or (" + p + "::TEXT ilike '%" + pagination.search + "%') "
-				query += "or (" + p + "::TEXT ilike '%" + pagination.search + "%') "
+			if p != "" {
+				log.Println("suoo")
+				log.Println(p)
+				p = getFieldName(p, "json", pagination.structType, "paginate")
+				if i == 0 {
+					countQuery += "and ((" + p + "::TEXT ilike '%" + pagination.search + "%') "
+					query += "and ((" + p + "::TEXT ilike '%" + pagination.search + "%') "
+				} else {
+					countQuery += "or (" + p + "::TEXT ilike '%" + pagination.search + "%') "
+					query += "or (" + p + "::TEXT ilike '%" + pagination.search + "%') "
+				}
 			}
-
 		}
 
 		if len(pagination.searchFields) > 0 {
-			countQuery += ") "
-			query += ") "
+			if pagination.searchFields[0] != "" {
+				countQuery += ") "
+				query += ") "
+			}
 		}
 	}
 
@@ -128,15 +141,35 @@ func (pagination Pagination) Select() (*string, *string) {
 
 		for s, sort := range pagination.sort {
 			if s == len(pagination.sort)-1 {
-				query += getFieldName(sort, "json", pagination.structType) + " " + descs[s] + ` `
+				query += getFieldName(sort, "json", pagination.structType, "db") + " " + descs[s] + ` `
 			} else {
-				query += getFieldName(sort, "json", pagination.structType) + " " + descs[s] + `, `
+				query += getFieldName(sort, "json", pagination.structType, "db") + " " + descs[s] + `, `
 			}
 		}
 	}
 
 	if pagination.itemsPerPage > -1 {
 		query += fmt.Sprintf(" LIMIT %v OFFSET %v;", pagination.itemsPerPage, offset)
+	}
+
+	if pagination.withVacuum {
+		countQuery = "SELECT count_estimate($" + strings.ReplaceAll(
+			countQuery,
+			"COUNT(dl.id)",
+			"1",
+		) + "$);"
+
+		countQuery = strings.ReplaceAll(
+			countQuery,
+			"'",
+			"''",
+		)
+
+		countQuery = strings.ReplaceAll(
+			countQuery,
+			"$",
+			"'",
+		)
 	}
 
 	return &query, &countQuery
@@ -157,7 +190,7 @@ func getSearchFieldsBetween(str string, start string, end string) (result []stri
 	return searchFields
 }
 
-func generateQueryCount(str string, start string, end string) (result string) {
+func generateQueryCount(str string, start string, end string, vacuum bool) (result string) {
 	a := strings.SplitAfterN(str, start, 2)
 	b := strings.SplitAfterN(a[len(a)-1], end, 2)
 	columns := b[0][0 : len(b[0])-len(end)]
@@ -177,10 +210,14 @@ func generateQueryCount(str string, start string, end string) (result string) {
 		}
 	}
 
+	if vacuum {
+		return strings.ReplaceAll(str, columns, " 1 ")
+	}
+
 	return strings.ReplaceAll(str, columns, " COUNT("+fieldWhithID+") ")
 }
 
-func getFieldName(tag, key string, s interface{}) (fieldname string) {
+func getFieldName(tag, key string, s interface{}, keyTarget string) (fieldname string) {
 	rt := reflect.TypeOf(s)
 	if rt.Kind() != reflect.Struct {
 		panic("bad type")
@@ -189,7 +226,7 @@ func getFieldName(tag, key string, s interface{}) (fieldname string) {
 		f := rt.Field(i)
 		v := strings.Split(f.Tag.Get(key), ",")[0] // use split to ignore tag "options" like omitempty, etc.
 		if v == tag {
-			return f.Tag.Get("db")
+			return f.Tag.Get(keyTarget)
 		}
 	}
 	return ""

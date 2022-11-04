@@ -7,13 +7,13 @@ import (
 )
 
 type Test struct {
-	Name     string `json:"name"     db:"name"`
-	LastName string `json:"lastName" db:"last_name"`
+	Name     string `json:"name"     db:"name" paginate:"test.name"`
+	LastName string `json:"lastName" db:"last_name" paginate:"test.last_name"`
 }
 
 func TestPaginate(t *testing.T) {
-	queryString := "SELECT t.* FROM test t WHERE 1=1 and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
-	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE 1=1 and ((t.id::TEXT ilike '%vinicius%') ) "
+	queryString := "SELECT t.* FROM test t WHERE 1=1 and ((test.name::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
+	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE 1=1 and ((test.name::TEXT ilike '%vinicius%') ) "
 
 	pagin := paginate.Instance(Test{})
 	query, queryCount := pagin.
@@ -22,11 +22,8 @@ func TestPaginate(t *testing.T) {
 		Desc([]string{"true", "false"}).
 		Page(3).
 		RowsPerPage(50).
-		SearchBy("vinicius", "t.id").
+		SearchBy("vinicius", "name").
 		Select()
-
-	// t.Log(*query)
-	// t.Log(*queryCount)
 
 	if queryString != *query {
 		t.Errorf("Wrong query")
@@ -39,8 +36,8 @@ func TestPaginate(t *testing.T) {
 }
 
 func TestPaginateWithArgs(t *testing.T) {
-	queryString := "SELECT t.* FROM test t WHERE t.name = 'jhon' and ((t.id::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
-	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE t.name = 'jhon' and ((t.id::TEXT ilike '%vinicius%') ) "
+	queryString := "SELECT t.* FROM test t WHERE test.name = 'jhon' and ((test.last_name::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
+	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE test.name = 'jhon' and ((test.last_name::TEXT ilike '%vinicius%') ) "
 
 	pagin := paginate.Instance(Test{})
 
@@ -50,20 +47,16 @@ func TestPaginateWithArgs(t *testing.T) {
 		Page(3).
 		RowsPerPage(50)
 
-	if 1 == 1 {
-		pagin.WhereArgs("t.name = 'jhon'")
-		pagin.SearchBy("vinicius", "t.id")
-		query, queryCount := pagin.Select()
-		t.Log(*query)
-		t.Log(*queryCount)
+	pagin.WhereArgs("test.name = 'jhon'")
+	pagin.SearchBy("vinicius", []string{"lastName"}...)
+	query, queryCount := pagin.Select()
 
-		if queryString != *query {
-			t.Errorf("Wrong query")
-		}
+	if queryString != *query {
+		t.Errorf("Wrong query")
+	}
 
-		if queryCountString != *queryCount {
-			t.Errorf("Wrong query count")
-		}
+	if queryCountString != *queryCount {
+		t.Errorf("Wrong query count")
 	}
 
 }
