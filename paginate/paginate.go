@@ -2,7 +2,6 @@ package paginate
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 )
@@ -115,15 +114,13 @@ func (pagination Pagination) Select() (*string, *string) {
 	if pagination.search != "" && len(pagination.searchFields) > 0 {
 		for i, p := range pagination.searchFields {
 			if p != "" {
-				log.Println("suoo")
-				log.Println(p)
 				p = getFieldName(p, "json", pagination.structType, "paginate")
 				if i == 0 {
-					countQuery += "and ((" + p + "::TEXT ilike '%" + pagination.search + "%') "
-					query += "and ((" + p + "::TEXT ilike '%" + pagination.search + "%') "
+					countQuery += "and ((" + p + "::TEXT ilike $1) "
+					query += "and ((" + p + "::TEXT ilike $1) "
 				} else {
-					countQuery += "or (" + p + "::TEXT ilike '%" + pagination.search + "%') "
-					query += "or (" + p + "::TEXT ilike '%" + pagination.search + "%') "
+					countQuery += "or (" + p + "::TEXT ilike $1) "
+					query += "or (" + p + "::TEXT ilike $1) "
 				}
 			}
 		}

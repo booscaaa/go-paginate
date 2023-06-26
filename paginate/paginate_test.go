@@ -1,6 +1,7 @@
 package paginate_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/booscaaa/go-paginate/paginate"
@@ -12,8 +13,8 @@ type Test struct {
 }
 
 func TestPaginate(t *testing.T) {
-	queryString := "SELECT t.* FROM test t WHERE 1=1 and ((test.name::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
-	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE 1=1 and ((test.name::TEXT ilike '%vinicius%') ) "
+	queryString := "SELECT t.* FROM test t WHERE 1=1 and ((test.name::TEXT ilike $1) ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
+	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE 1=1 and ((test.name::TEXT ilike $1) ) "
 
 	pagin := paginate.Instance(Test{})
 	query, queryCount := pagin.
@@ -24,6 +25,8 @@ func TestPaginate(t *testing.T) {
 		RowsPerPage(50).
 		SearchBy("vinicius", "name").
 		Select()
+
+	fmt.Println(*query)
 
 	if queryString != *query {
 		t.Errorf("Wrong query")
@@ -36,8 +39,8 @@ func TestPaginate(t *testing.T) {
 }
 
 func TestPaginateWithArgs(t *testing.T) {
-	queryString := "SELECT t.* FROM test t WHERE test.name = 'jhon' and ((test.last_name::TEXT ilike '%vinicius%') ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
-	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE test.name = 'jhon' and ((test.last_name::TEXT ilike '%vinicius%') ) "
+	queryString := "SELECT t.* FROM test t WHERE test.name = 'jhon' and ((test.last_name::TEXT ilike $1) ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
+	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE test.name = 'jhon' and ((test.last_name::TEXT ilike $1) ) "
 
 	pagin := paginate.Instance(Test{})
 
