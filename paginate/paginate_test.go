@@ -1,7 +1,6 @@
 package paginate_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/booscaaa/go-paginate/paginate"
@@ -26,8 +25,6 @@ func TestPaginate(t *testing.T) {
 		SearchBy("vinicius", "name").
 		Select()
 
-	fmt.Println(*query)
-
 	if queryString != *query {
 		t.Errorf("Wrong query")
 		return
@@ -39,8 +36,8 @@ func TestPaginate(t *testing.T) {
 }
 
 func TestPaginateWithArgs(t *testing.T) {
-	queryString := "SELECT t.* FROM test t WHERE test.name = 'jhon' and ((test.last_name::TEXT ilike $1) ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
-	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE test.name = 'jhon' and ((test.last_name::TEXT ilike $1) ) "
+	queryString := "SELECT t.* FROM test t WHERE 1=1  and test.name = 'jhon' and ((test.last_name::TEXT ilike $1) ) ORDER BY name DESC, last_name ASC  LIMIT 50 OFFSET 100;"
+	queryCountString := "SELECT COUNT(t.id) FROM test t WHERE 1=1  and test.name = 'jhon' and ((test.last_name::TEXT ilike $1) ) "
 
 	pagin := paginate.Instance(Test{})
 
@@ -50,7 +47,7 @@ func TestPaginateWithArgs(t *testing.T) {
 		Page(3).
 		RowsPerPage(50)
 
-	pagin.WhereArgs("test.name = 'jhon'")
+	pagin.WhereArgs("and", "test.name = 'jhon'")
 	pagin.SearchBy("vinicius", []string{"lastName"}...)
 	query, queryCount := pagin.Select()
 
@@ -61,5 +58,4 @@ func TestPaginateWithArgs(t *testing.T) {
 	if queryCountString != *queryCount {
 		t.Errorf("Wrong query count")
 	}
-
 }

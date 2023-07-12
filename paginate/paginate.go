@@ -43,12 +43,9 @@ func (pagination *Pagination) Query(query string) *Pagination {
 	return pagination
 }
 
-func (pagination *Pagination) WhereArgs(whereArgs string) *Pagination {
-	if strings.Contains(pagination.where, "WHERE 1=1") {
-		pagination.where = " WHERE " + whereArgs + " "
-	} else {
-		pagination.where += " " + whereArgs + " "
-	}
+func (pagination *Pagination) WhereArgs(operation, whereArgs string) *Pagination {
+	pagination.where += fmt.Sprintf(" %s %s ", operation, whereArgs)
+
 	return pagination
 }
 
