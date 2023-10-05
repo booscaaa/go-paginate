@@ -9,6 +9,7 @@ import (
 type Pagination struct {
 	query        string
 	where        string
+	group        string
 	sort         []string
 	descending   []string
 	page         int
@@ -24,6 +25,7 @@ func Instance(structType interface{}) Pagination {
 	pagination := Pagination{
 		query:        "",
 		where:        " WHERE 1=1 ",
+		group:        " GROUP BY ",
 		sort:         []string{},
 		descending:   []string{},
 		page:         1,
@@ -45,6 +47,19 @@ func (pagination *Pagination) Query(query string) *Pagination {
 
 func (pagination *Pagination) WhereArgs(operation, whereArgs string) *Pagination {
 	pagination.where += fmt.Sprintf(" %s %s ", operation, whereArgs)
+
+	return pagination
+}
+
+func (pagination *Pagination) GroupBy(columns ...string) *Pagination {
+
+	for index, column := range columns {
+		if index == len(columns)-1 {
+			pagination.group += column
+			continue
+		}
+		pagination.group += column + ", "
+	}
 
 	return pagination
 }
@@ -142,8 +157,13 @@ func (pagination Pagination) Select() (*string, *string) {
 		}
 	}
 
+	if pagination.group != " GROUP BY " {
+		query += pagination.group
+		countQuery += pagination.group
+	}
+
 	if pagination.itemsPerPage > -1 {
-		query += fmt.Sprintf(" LIMIT %v OFFSET %v;", pagination.itemsPerPage, offset)
+		query += fmt.Sprintf(" LIMIT %d OFFSET %d;", pagination.itemsPerPage, offset)
 	}
 
 	if pagination.withVacuum {
