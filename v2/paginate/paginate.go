@@ -18,7 +18,7 @@ type paginQueryParams struct {
 	Columns        []string
 	Joins          []string
 	SortColumns    []string
-	SortDirections []bool
+	SortDirections []string
 	WhereClauses   []string
 	WhereArgs      []interface{}
 	WhereCombining string
@@ -76,15 +76,14 @@ func WithVacuum(vacuum bool) Option {
 	}
 }
 
-// WithColumns configura o campo Columns
-func WithColumns(columns []string) Option {
+func WithColumns(column string) Option {
 	return func(params *paginQueryParams) {
-		params.Columns = columns
+		params.Columns = append(params.Columns, column)
 	}
 }
 
 // WithSort configura os campos SortColumns e SortDirections
-func WithSort(sortColumns []string, sortDirections []bool) Option {
+func WithSort(sortColumns []string, sortDirections []string) Option {
 	return func(params *paginQueryParams) {
 		params.SortColumns = sortColumns
 		params.SortDirections = sortDirections
@@ -212,7 +211,7 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 			columnName := getFieldName(column, "json", "paginate", params.Struct)
 			if columnName != "" {
 				direction := "ASC"
-				if params.SortDirections[i] {
+				if params.SortDirections[i] == "true" {
 					direction = "DESC"
 				}
 				sortClauses = append(sortClauses, fmt.Sprintf("%s %s", columnName, direction))
