@@ -273,7 +273,7 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 	}
 
 	// Cláusula SELECT para contagem
-	countSelectClause := "SELECT COUNT(*)"
+	countSelectClause := "SELECT COUNT(id)"
 	clauses = append(clauses, countSelectClause)
 
 	// Cláusula FROM com tabela principal
@@ -317,7 +317,8 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 	// Verifica se VACUUM deve ser aplicado
 	if params.Vacuum {
 		countQuery := strings.Join(clauses, " ")
-		countQuery = "SELECT count_estimate(" + countQuery + ");"
+		countQuery = "SELECT count_estimate('" + countQuery + "');"
+		countQuery = strings.Replace(countQuery, "COUNT(id)", "1", -1)
 		return countQuery, args
 	}
 
