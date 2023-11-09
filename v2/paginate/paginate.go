@@ -151,18 +151,17 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 	// Cláusula SELECT com colunas personalizadas
 	selectClause := "SELECT "
 	if len(params.Columns) > 0 {
-		columnNames := []string{}
-		for _, column := range params.Columns {
-			columnName := getFieldName(column, "json", "paginate", params.Struct)
-			if columnName != "" {
-				columnNames = append(columnNames, columnName)
-			}
-		}
-		if len(columnNames) > 0 {
-			selectClause += strings.Join(columnNames, ", ")
-		} else {
-			selectClause += "*"
-		}
+		// columnNames := []string{}
+		// for _, column := range params.Columns {
+		// 	columnName := getFieldName(column, "json", "paginate", params.Struct)
+		// 	if columnName != "" {
+		// 		columnNames = append(columnNames, columnName)
+		// 	}
+		// }
+		// if len(columnNames) > 0 {
+		selectClause += strings.Join(params.Columns, ", ")
+	} else {
+		selectClause += "*"
 	}
 	clauses = append(clauses, selectClause)
 
