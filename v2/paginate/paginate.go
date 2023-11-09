@@ -76,7 +76,7 @@ func WithVacuum(vacuum bool) Option {
 	}
 }
 
-func WithColumns(column string) Option {
+func WithColumn(column string) Option {
 	return func(params *paginQueryParams) {
 		params.Columns = append(params.Columns, column)
 	}
