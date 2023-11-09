@@ -353,9 +353,9 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 		for i := 0; i < len(args); i++ {
 			switch args[i].(type) {
 			case string:
-				args[i] = fmt.Sprintf("'%s'", args[i])
+				args[i] = fmt.Sprintf("''%s''", args[i])
 			case time.Time:
-				args[i] = fmt.Sprintf("'%s'", args[i])
+				args[i] = fmt.Sprintf("''%s''", args[i])
 			}
 		}
 
