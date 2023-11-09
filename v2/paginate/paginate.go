@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // paginQueryParams contém os parâmetros para a consulta paginada
@@ -314,14 +315,6 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 		clauses = append(clauses, "WHERE "+whereClause)
 	}
 
-	// Verifica se VACUUM deve ser aplicado
-	if params.Vacuum {
-		countQuery := strings.Join(clauses, " ")
-		countQuery = "SELECT count_estimate('" + countQuery + "');"
-		countQuery = strings.Replace(countQuery, "COUNT(id)", "1", -1)
-		return countQuery, args
-	}
-
 	replacePlaceholders := func(query string, args []interface{}) (string, []interface{}) {
 		// Use um contador para acompanhar a posição do próximo argumento
 		// argCount := 1
@@ -350,6 +343,24 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 
 	// Substitua os placeholders ? pelos placeholders $n
 	query, args = replacePlaceholders(query, args)
+
+	// Verifica se VACUUM deve ser aplicado
+	if params.Vacuum {
+		countQuery := strings.Join(clauses, " ")
+		countQuery = "SELECT count_estimate('" + countQuery + "');"
+		countQuery = strings.Replace(countQuery, "COUNT(id)", "1", -1)
+
+		for i := 0; i < len(args); i++ {
+			switch args[i].(type) {
+			case string:
+				args[i] = fmt.Sprintf("'%s'", args[i])
+			case time.Time:
+				args[i] = fmt.Sprintf("'%s'", args[i])
+			}
+		}
+
+		return countQuery, args
+	}
 
 	return query, args
 }
