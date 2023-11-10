@@ -266,12 +266,13 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 		if params.Page > 1 && len(params.SortColumns) > 0 && len(params.SortDirections) == len(params.SortColumns) {
 			sortClauses := []string{}
 			for i, column := range params.SortColumns {
+				idColumnName := getFieldName("id", "json", "paginate", params.Struct)
 				columnName := getFieldName(column, "json", "paginate", params.Struct)
-				if columnName != "" {
+				if columnName != "" && idColumnName != "" {
 					argNum := nextArg()
 					argNumNext := nextArg()
-					sortClauses = append(sortClauses, fmt.Sprintf("(((%s = $%d) OR (%s %s $%d)) AND id %s $%d)",
-						columnName, argNum, columnName, getComparisonOperator(params.SortDirections[i]), argNum, getComparisonOperator(params.SortDirections[i]), argNumNext))
+					sortClauses = append(sortClauses, fmt.Sprintf("(((%s = $%d) OR (%s %s $%d)) AND %s %s $%d)",
+						columnName, argNum, columnName, getComparisonOperator(params.SortDirections[i]), argNum, idColumnName, getComparisonOperator(params.SortDirections[i]), argNumNext))
 					args[len(args)-2] = params.mapArgs[column]
 					args[len(args)-1] = params.mapArgs["id"]
 				}
