@@ -270,7 +270,7 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 				if columnName != "" {
 					argNum := nextArg()
 					argNumNext := nextArg()
-					sortClauses = append(sortClauses, fmt.Sprintf("((%s = $%d) OR (%s %s $%d AND id %s $%d))",
+					sortClauses = append(sortClauses, fmt.Sprintf("(((%s = $%d) OR (%s %s $%d)) AND id %s $%d)",
 						columnName, argNum, columnName, getComparisonOperator(params.SortDirections[i]), argNum, getComparisonOperator(params.SortDirections[i]), argNumNext))
 					args[len(args)-2] = params.mapArgs[column]
 					args[len(args)-1] = params.mapArgs["id"]
@@ -352,9 +352,9 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 
 func getComparisonOperator(direction string) string {
 	if direction == "true" {
-		return ">"
+		return "<"
 	}
-	return "<"
+	return ">"
 }
 
 func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {

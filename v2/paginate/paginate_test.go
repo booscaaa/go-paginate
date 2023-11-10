@@ -159,14 +159,14 @@ func TestGenerateCountQuery(t *testing.T) {
 func TestGetComparisonOperator(t *testing.T) {
 	// Test case 1: Sorting direction is true (descending)
 	operator := getComparisonOperator("true")
-	expectedOperator := ">"
+	expectedOperator := "<"
 	if operator != expectedOperator {
 		t.Errorf("Expected operator: %s, Got: %s", expectedOperator, operator)
 	}
 
 	// Test case 2: Sorting direction is false (ascending)
 	operator = getComparisonOperator("false")
-	expectedOperator = "<"
+	expectedOperator = ">"
 	if operator != expectedOperator {
 		t.Errorf("Expected operator: %s, Got: %s", expectedOperator, operator)
 	}
