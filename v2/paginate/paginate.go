@@ -270,11 +270,18 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 				columnName := getFieldName(column, "json", "paginate", params.Struct)
 				if columnName != "" && idColumnName != "" {
 					argNum := nextArg()
-					argNumNext := nextArg()
-					sortClauses = append(sortClauses, fmt.Sprintf("(((%s = $%d) OR (%s %s $%d)) AND %s %s $%d)",
-						columnName, argNum, columnName, getComparisonOperator(params.SortDirections[i]), argNum, idColumnName, getComparisonOperator(params.SortDirections[i]), argNumNext))
-					args[len(args)-2] = params.mapArgs[column]
-					args[len(args)-1] = params.mapArgs["id"]
+
+					if i == 0 {
+						argNumNext := nextArg()
+						sortClauses = append(sortClauses, fmt.Sprintf("(((%s = $%d) OR (%s %s $%d)) AND %s %s $%d)",
+							columnName, argNum, columnName, getComparisonOperator(params.SortDirections[i]), argNum, idColumnName, getComparisonOperator(params.SortDirections[i]), argNumNext))
+						args[len(args)-2] = params.mapArgs[column]
+						args[len(args)-1] = params.mapArgs["id"]
+					} else {
+						sortClauses = append(sortClauses, fmt.Sprintf("(((%s = $%d) OR (%s %s $%d))",
+							columnName, argNum, columnName, getComparisonOperator(params.SortDirections[i]), argNum))
+						args[len(args)-2] = params.mapArgs[column]
+					}
 				}
 			}
 			if len(sortClauses) > 0 {
