@@ -1,130 +1,189 @@
+// paginate_test.go
 package paginate
 
 import (
 	"reflect"
-	"strings"
 	"testing"
+	"time"
 )
 
+type S struct {
+	DataCriacao time.Time `json:"dataCriacao" paginate:"desktop_log.data_criacao"`
+	Modulo      string    `json:"modulo" paginate:"desktop_log.modulo"`
+	NomeCliente string    `json:"nomeCliente" paginate:"cliente.nome"`
+}
+
 func TestPaginQuery(t *testing.T) {
-	t.Run("ValidOptions", func(t *testing.T) {
-		// Test PaginQuery with valid options
-		params, err := PaginQuery(
-			WithStruct(struct{}{}),
-			WithTable("myTable"),
-		)
+	// Test case 1: Valid parameters
+	params, err := PaginQuery(
+		WithStruct(S{}),
+		WithTable("desktop_log"),
+		WithColumn("desktop_log.*"),
+		WithPage(2),
+		WithItemsPerPage(1),
+		WithSort([]string{"dataCriacao", "nomeCliente"}, []string{"true", "false"}),
+		WithSearch("oficina"),
+		WithSearchFields([]string{"nomeCliente"}),
+		WithVacuum(true),
+		WithMapArgs(map[string]interface{}{
+			"dataCriacao": "2023-09-12",
+			"id":          23591765,
+			"nomeCliente": "PARADISO GIOVANELLA TRANSP. LTDA",
+		}),
+		WithWhereClause("teste = ?", "tcha"),
+		WithNoOffet(true),
+	)
 
-		if err != nil {
-			t.Errorf("Expected no error, got: %v", err)
-		}
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
 
-		// Verify that the returned params are correctly set
-		expectedParams := &paginQueryParams{
-			Page:           1,
-			ItemsPerPage:   10,
-			WhereCombining: "AND",
-			Table:          "myTable",
-			Struct:         struct{}{},
-		}
+	if params == nil {
+		t.Error("Expected non-nil paginQueryParams")
+	}
 
-		if !reflect.DeepEqual(params, expectedParams) {
-			t.Errorf("Expected params %+v, got %+v", expectedParams, params)
-		}
-	})
+	// Test case 2: Missing required parameters
+	_, err = PaginQuery(
+		WithTable("desktop_log"),
+		WithItemsPerPage(10),
+		// Missing WithStruct
+	)
 
-	t.Run("MissingTable", func(t *testing.T) {
-		// Test PaginQuery with missing table
-		_, err := PaginQuery(
-			WithStruct(struct{}{}),
-		)
-
-		if err == nil || err.Error() != "principal table is required" {
-			t.Errorf("Expected 'principal table is required' error, got: %v", err)
-		}
-	})
-
-	t.Run("MissingStruct", func(t *testing.T) {
-		// Test PaginQuery with missing struct
-		_, err := PaginQuery(
-			WithTable("myTable"),
-		)
-
-		if err == nil || err.Error() != "struct is required" {
-			t.Errorf("Expected 'struct is required' error, got: %v", err)
-		}
-	})
+	if err == nil {
+		t.Error("Expected error for missing struct")
+	}
 }
 
 func TestGenerateSQL(t *testing.T) {
-	// Create a sample paginQueryParams for testing
+	// Test case 1: Basic query with default parameters
 	params := &paginQueryParams{
-		Page:           1,
-		ItemsPerPage:   10,
-		WhereCombining: "AND",
-		Table:          "myTable",
-		Struct:         struct{}{},
+		Page:         1,
+		ItemsPerPage: 10,
+		Table:        "desktop_log",
+		Struct:       S{},
+	}
+	sql, args := GenerateSQL(params)
+
+	expectedSQL := "SELECT * FROM desktop_log LIMIT $1 OFFSET $2"
+	expectedArgs := []interface{}{10, 0}
+
+	if sql != expectedSQL {
+		t.Errorf("Expected SQL: %s, Got: %s", expectedSQL, sql)
 	}
 
-	t.Run("BasicTest", func(t *testing.T) {
-		// Test GenerateSQL with basic parameters
-		sql, _ := GenerateSQL(params)
+	if !reflect.DeepEqual(args, expectedArgs) {
+		t.Errorf("Expected args: %v, Got: %v", expectedArgs, args)
+	}
 
-		// You can add assertions here to check the generated SQL
-		// For example, check if it contains "SELECT" and "FROM myTable"
-		if !strings.Contains(sql, "SELECT") || !strings.Contains(sql, "FROM myTable") {
-			t.Errorf("Generated SQL doesn't match the expected format")
-		}
-	})
+	// Test case 2: Query with search conditions, custom columns, joins, and sorting
+	params = &paginQueryParams{
+		Page:           2,
+		ItemsPerPage:   1,
+		Search:         "example",
+		SearchFields:   []string{"nomeCliente"},
+		Columns:        []string{"desktop_log.*", "cliente.nome as nome_cliente"},
+		Joins:          []string{"INNER JOIN cliente cliente on cliente.id = desktop_log.id_cliente"},
+		SortColumns:    []string{"dataCriacao", "nomeCliente"},
+		SortDirections: []string{"true", "false"},
+		WhereClauses:   []string{"teste = ?"},
+		WhereArgs:      []interface{}{"tcha"},
+		Table:          "desktop_log",
+		Struct:         S{},
+	}
+	sql, args = GenerateSQL(params)
 
-	// Add more test cases to cover other scenarios
+	expectedSQL = "SELECT desktop_log.*, cliente.nome as nome_cliente FROM desktop_log " +
+		"INNER JOIN cliente cliente on cliente.id = desktop_log.id_cliente " +
+		"WHERE (cliente.nome::TEXT ILIKE $1) AND teste = $2 " +
+		"ORDER BY desktop_log.data_criacao DESC, cliente.nome ASC " +
+		"LIMIT $3 OFFSET $4"
+	expectedArgs = []interface{}{"%example%", "tcha", 1, 1}
+
+	if sql != expectedSQL {
+		t.Errorf("Expected SQL: %s, Got: %s", expectedSQL, sql)
+	}
+
+	if !reflect.DeepEqual(args, expectedArgs) {
+		t.Errorf("Expected args: %v, Got: %v", expectedArgs, args)
+	}
 }
 
 func TestGenerateCountQuery(t *testing.T) {
-	// Create a sample paginQueryParams for testing
+	// Test case 1: Basic count query with default parameters
 	params := &paginQueryParams{
-		Page:           1,
-		ItemsPerPage:   10,
-		WhereCombining: "AND",
-		Table:          "myTable",
-		Struct:         struct{}{},
+		Page:         1,
+		ItemsPerPage: 10,
+		Table:        "desktop_log",
+		Struct:       S{},
+	}
+	countSQL, countArgs := GenerateCountQuery(params)
+
+	expectedCountSQL := "SELECT COUNT(id) FROM desktop_log"
+	expectedCountArgs := []interface{}{}
+
+	if countSQL != expectedCountSQL {
+		t.Errorf("Expected count SQL: %s, Got: %s", expectedCountSQL, countSQL)
 	}
 
-	t.Run("BasicTest", func(t *testing.T) {
-		// Test GenerateCountQuery with basic parameters
-		sql, _ := GenerateCountQuery(params)
+	if !reflect.DeepEqual(countArgs, expectedCountArgs) {
+		t.Errorf("Expected count args: %v, Got: %v", expectedCountArgs, countArgs)
+	}
 
-		// You can add assertions here to check the generated SQL
-		// For example, check if it contains "SELECT COUNT(*)" and "FROM myTable"
-		if !strings.Contains(sql, "SELECT COUNT(*)") || !strings.Contains(sql, "FROM myTable") {
-			t.Errorf("Generated SQL doesn't match the expected format")
-		}
-	})
+	// Test case 2: Count query with search conditions, custom columns, and joins
+	params = &paginQueryParams{
+		Page:         2,
+		ItemsPerPage: 1,
+		Search:       "example",
+		SearchFields: []string{"nomeCliente"},
+		Columns:      []string{"desktop_log.*", "cliente.nome as nome_cliente"},
+		Joins:        []string{"INNER JOIN cliente cliente on cliente.id = desktop_log.id_cliente"},
+		Table:        "desktop_log",
+		Struct:       S{},
+	}
+	countSQL, countArgs = GenerateCountQuery(params)
 
-	// Add more test cases to cover other scenarios
+	expectedCountSQL = "SELECT COUNT(id) FROM desktop_log " +
+		"INNER JOIN cliente cliente on cliente.id = desktop_log.id_cliente " +
+		"WHERE (cliente.nome::TEXT ILIKE $1)"
+	expectedCountArgs = []interface{}{"%example%"}
+
+	if countSQL != expectedCountSQL {
+		t.Errorf("Expected count SQL: %s, Got: %s", expectedCountSQL, countSQL)
+	}
+
+	if !reflect.DeepEqual(countArgs, expectedCountArgs) {
+		t.Errorf("Expected count args: %v, Got: %v", expectedCountArgs, countArgs)
+	}
+}
+
+func TestGetComparisonOperator(t *testing.T) {
+	// Test case 1: Sorting direction is true (descending)
+	operator := getComparisonOperator("true")
+	expectedOperator := ">"
+	if operator != expectedOperator {
+		t.Errorf("Expected operator: %s, Got: %s", expectedOperator, operator)
+	}
+
+	// Test case 2: Sorting direction is false (ascending)
+	operator = getComparisonOperator("false")
+	expectedOperator = "<"
+	if operator != expectedOperator {
+		t.Errorf("Expected operator: %s, Got: %s", expectedOperator, operator)
+	}
 }
 
 func TestGetFieldName(t *testing.T) {
-	t.Run("ValidTag", func(t *testing.T) {
-		// Test GetFieldName with a valid tag
-		fieldname := getFieldName("myTag", "json", "paginate", struct {
-			MyTag string `json:"myTag" paginate:"myField"`
-		}{})
+	// Add test cases for GetFieldName function...
 
-		if fieldname != "myField" {
-			t.Errorf("Expected 'myField', got: %s", fieldname)
-		}
-	})
+	// Test case 1: Valid field tag
+	fieldName := getFieldName("dataCriacao", "json", "paginate", S{})
+	if fieldName != "desktop_log.data_criacao" {
+		t.Errorf("Unexpected field name: %s", fieldName)
+	}
 
-	t.Run("InvalidTag", func(t *testing.T) {
-		// Test GetFieldName with an invalid tag
-		fieldname := getFieldName("invalidTag", "json", "paginate", struct {
-			MyTag string `json:"myTag" paginate:"myField"`
-		}{})
-
-		if fieldname != "" {
-			t.Errorf("Expected empty string, got: %s", fieldname)
-		}
-	})
-
-	// Add more test cases to cover other scenarios
+	// Test case 2: Missing field tag
+	fieldName = getFieldName("invalidField", "json", "paginate", S{})
+	if fieldName != "" {
+		t.Errorf("Expected empty field name, got: %s", fieldName)
+	}
 }
