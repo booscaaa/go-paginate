@@ -31,7 +31,7 @@ func TestPaginQuery(t *testing.T) {
 			"nomeCliente": "PARADISO GIOVANELLA TRANSP. LTDA",
 		}),
 		WithWhereClause("teste = ?", "tcha"),
-		WithNoOffet(true),
+		WithNoOffset(true),
 	)
 
 	if err != nil {

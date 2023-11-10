@@ -87,7 +87,7 @@ type paginQueryParams struct {
 // Option é uma função que configura opções em paginQueryParams
 type Option func(*paginQueryParams)
 
-func WithNoOffet(noOffset bool) Option {
+func WithNoOffset(noOffset bool) Option {
 	return func(params *paginQueryParams) {
 		params.noOffset = noOffset
 	}
