@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // paginQueryParams contém os parâmetros para a consulta paginada
@@ -350,14 +350,10 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 		countQuery = "SELECT count_estimate('" + countQuery + "');"
 		countQuery = strings.Replace(countQuery, "COUNT(id)", "1", -1)
 
-		for i := 0; i < len(args); i++ {
-			switch args[i].(type) {
-			case string:
-				args[i] = fmt.Sprintf("''%s''", args[i])
-			case time.Time:
-				args[i] = fmt.Sprintf("''%s''", args[i])
-			}
-		}
+		re := regexp.MustCompile(`(\$[0-9]+)`)
+		countQuery = re.ReplaceAllStringFunc(countQuery, func(match string) string {
+			return "''" + match + "''"
+		})
 
 		return countQuery, args
 	}
