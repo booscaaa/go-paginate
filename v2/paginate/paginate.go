@@ -278,9 +278,9 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 						args[len(args)-2] = params.mapArgs[column]
 						args[len(args)-1] = params.mapArgs["id"]
 					} else {
-						sortClauses = append(sortClauses, fmt.Sprintf("(((%s = $%d) OR (%s %s $%d))",
+						sortClauses = append(sortClauses, fmt.Sprintf("((%s = $%d) OR (%s %s $%d))",
 							columnName, argNum, columnName, getComparisonOperator(params.SortDirections[i]), argNum))
-						args[len(args)-2] = params.mapArgs[column]
+						args[len(args)-1] = params.mapArgs[column]
 					}
 				}
 			}
