@@ -25,10 +25,79 @@ type paginQueryParams struct {
 	WhereCombining string
 	Table          string
 	Struct         interface{}
+	mapArgs        map[string]any
+	noOffset       bool
 }
+
+// type S struct {
+// 	DataCriacao time.Time `json:"dataCriacao" paginate:"desktop_log.data_criacao"`
+// 	Modulo      string    `json:"modulo" paginate:"desktop_log.modulo"`
+// 	NomeCliente string    `json:"nomeCliente" paginate:"cliente.nome"`
+// }
+
+// func main() {
+// 	// Exemplo de uso
+// 	// sortOptions := WithSort([]string{"dataCriacao"}, []string{"true"})
+// 	// columnOptions := WithColumn("dataCriacao")
+// 	// searchOptions := WithSearch("exemplo")
+// 	// pageOptions := WithPage(2)
+// 	// itemsPerPageOptions := WithItemsPerPage(20)
+// 	// searchFieldsOptions := WithSearchFields([]string{"dataCriacao", "programa", "modulo"})
+// 	// vacuumOptions := WithVacuum(false)
+
+// 	// Criação da instância PaginQueryParams
+// 	params, _ := PaginQuery(
+// 		WithStruct(S{}),
+// 		WithTable("desktop_log"),
+// 		WithColumn("desktop_log.*"),
+// 		WithColumn("cliente.nome as nome_cliente"),
+// 		WithColumn("cliente.cod_cli_cgi as cod_cli_cgi"),
+// 		WithJoin("INNER JOIN cliente cliente on cliente.id = desktop_log.id_cliente"),
+// 		WithPage(2),
+// 		WithItemsPerPage(1),
+// 		WithSort([]string{"dataCriacao", "nomeCliente"}, []string{"true", "false"}),
+// 		WithSearch("oficina"),
+// 		WithSearchFields([]string{"nomeCliente"}),
+// 		WithVacuum(true),
+// 		WithMapArgs(map[string]any{
+// 			"dataCriacao": "2023-09-12",
+// 			"id":          23591765,
+// 			"nomeCliente": "PARADISO GIOVANELLA TRANSP. LTDA",
+// 		}),
+// 		WithWhereClause("teste = ?", "tcha"),
+// 		WithNoOffet(true),
+// 	)
+
+// 	// Condição dinâmica
+// 	// x := "x"
+// 	// if x == "x" {
+// 	// 	WithWhereCombining("AND")(params)
+// 	// 	WithWhereClause("coluna5 = ?", x)(params)
+// 	// }
+
+// 	// Gere a consulta SQL e argumentos
+// 	sql, args := GenerateSQL(params)
+// 	countSQL, countArgs := GenerateCountQuery(params)
+// 	fmt.Println(sql)
+// 	fmt.Println(args)
+// 	fmt.Println(countSQL)
+// 	fmt.Println(countArgs)
+// }
 
 // Option é uma função que configura opções em paginQueryParams
 type Option func(*paginQueryParams)
+
+func WithNoOffet(noOffset bool) Option {
+	return func(params *paginQueryParams) {
+		params.noOffset = noOffset
+	}
+}
+
+func WithMapArgs(mapArgs map[string]any) Option {
+	return func(params *paginQueryParams) {
+		params.mapArgs = mapArgs
+	}
+}
 
 func WithStruct(s interface{}) Option {
 	return func(params *paginQueryParams) {
@@ -119,6 +188,7 @@ func PaginQuery(options ...Option) (*paginQueryParams, error) {
 		Page:           1,
 		ItemsPerPage:   10,
 		WhereCombining: "AND", // Combinação padrão é "AND"
+		noOffset:       false,
 	}
 
 	// Aplicar opções
@@ -152,14 +222,6 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 	// Cláusula SELECT com colunas personalizadas
 	selectClause := "SELECT "
 	if len(params.Columns) > 0 {
-		// columnNames := []string{}
-		// for _, column := range params.Columns {
-		// 	columnName := getFieldName(column, "json", "paginate", params.Struct)
-		// 	if columnName != "" {
-		// 		columnNames = append(columnNames, columnName)
-		// 	}
-		// }
-		// if len(columnNames) > 0 {
 		selectClause += strings.Join(params.Columns, ", ")
 	} else {
 		selectClause += "*"
@@ -199,6 +261,28 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 		args = append(args, params.WhereArgs...)
 	}
 
+	if params.noOffset {
+		// Paginação sem OFFSET e LIMIT
+		if params.Page > 1 && len(params.SortColumns) > 0 && len(params.SortDirections) == len(params.SortColumns) {
+			sortClauses := []string{}
+			for i, column := range params.SortColumns {
+				columnName := getFieldName(column, "json", "paginate", params.Struct)
+				if columnName != "" {
+					argNum := nextArg()
+					argNumNext := nextArg()
+					sortClauses = append(sortClauses, fmt.Sprintf("((%s = $%d) OR (%s %s $%d AND id %s $%d))",
+						columnName, argNum, columnName, getComparisonOperator(params.SortDirections[i]), argNum, getComparisonOperator(params.SortDirections[i]), argNumNext))
+					args[len(args)-2] = params.mapArgs[column]
+					args[len(args)-1] = params.mapArgs["id"]
+				}
+			}
+			if len(sortClauses) > 0 {
+				prevPageClause := fmt.Sprintf("(%s)", strings.Join(sortClauses, " AND "))
+				whereClauses = append(whereClauses, prevPageClause)
+			}
+		}
+	}
+
 	if len(whereClauses) > 0 {
 		whereClause := strings.Join(whereClauses, " AND ")
 		clauses = append(clauses, "WHERE "+whereClause)
@@ -225,9 +309,14 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 
 	// Cláusula LIMIT e OFFSET para paginação
 	offset := (params.Page - 1) * params.ItemsPerPage
-	clauses = append(clauses, "LIMIT $"+fmt.Sprint(nextArg())+" OFFSET $"+fmt.Sprint(nextArg()))
-	args[len(args)-2] = params.ItemsPerPage
-	args[len(args)-1] = offset
+	clauses = append(clauses, "LIMIT $"+fmt.Sprint(nextArg()))
+	args[len(args)-1] = params.ItemsPerPage
+
+	// suo
+	if !params.noOffset {
+		clauses = append(clauses, "OFFSET $"+fmt.Sprint(nextArg()))
+		args[len(args)-1] = offset
+	}
 
 	replacePlaceholders := func(query string, args []interface{}) (string, []interface{}) {
 		// Use um contador para acompanhar a posição do próximo argumento
@@ -259,6 +348,13 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 	query, args = replacePlaceholders(query, args)
 
 	return query, args
+}
+
+func getComparisonOperator(direction string) string {
+	if direction == "true" {
+		return ">"
+	}
+	return "<"
 }
 
 func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
@@ -294,7 +390,7 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 		for _, field := range params.SearchFields {
 			columnName := getFieldName(field, "json", "paginate", params.Struct)
 			if columnName != "" {
-				searchConditions = append(searchConditions, fmt.Sprintf("%s ILIKE $%d", columnName, nextArg()))
+				searchConditions = append(searchConditions, fmt.Sprintf("%s::TEXT ILIKE $%d", columnName, nextArg()))
 				args[len(args)-1] = "%" + params.Search + "%"
 			}
 		}
@@ -346,8 +442,7 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 
 	// Verifica se VACUUM deve ser aplicado
 	if params.Vacuum {
-		countQuery := strings.Join(clauses, " ")
-		countQuery = "SELECT count_estimate('" + countQuery + "');"
+		countQuery := "SELECT count_estimate('" + query + "');"
 		countQuery = strings.Replace(countQuery, "COUNT(id)", "1", -1)
 
 		re := regexp.MustCompile(`(\$[0-9]+)`)
