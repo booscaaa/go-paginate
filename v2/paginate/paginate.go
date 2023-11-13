@@ -373,6 +373,12 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 
 	// Cláusula SELECT para contagem
 	countSelectClause := "SELECT COUNT(id)"
+	idColumnName := getFieldName("id", "json", "paginate", params.Struct)
+
+	if idColumnName != "" {
+		countSelectClause = fmt.Sprintf("SELECT %s", idColumnName)
+	}
+
 	clauses = append(clauses, countSelectClause)
 
 	// Cláusula FROM com tabela principal
