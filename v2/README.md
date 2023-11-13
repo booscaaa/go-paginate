@@ -21,60 +21,177 @@ Connect with me at [LinkedIn](https://www.linkedin.com/in/booscaaa/).
 
 <br>
 
-## Functionalities
+# Paginate Package Readme
 
-- Generate query and query count pagination for postgresql
+## Overview
 
-<br>
+The `paginate` package provides a flexible and easy-to-use solution for paginated queries in Go. It allows you to construct paginated queries with various options, including sorting, filtering, and custom column selection.
 
-## Starting
+## Usage
 
-### Installation
+To use the `paginate` package, follow these steps:
 
-```sh
-go get github.com/booscaaa/go-paginate
-```
+1. **Import the package:**
 
-<br>
+   ```go
+   import "github.com/booscaaa/go-paginate/v2/paginate"
+   ```
 
-### Usage
+2. **Create a struct to represent your database model.**
+
+   Define a struct that mirrors your database model, with struct tags specifying the corresponding database columns.
+
+   ```go
+   type MyModel struct {
+       ID           int       `json:"id" paginate:"my_table.id"`
+       CreatedAt    time.Time `json:"created_at" paginate:"my_table.created_at"`
+       Name         string    `json:"name" paginate:"my_table.name"`
+   }
+   ```
+
+3. **Use the `PaginQuery` function to create paginated queries:**
+
+   ```go
+   // Example usage:
+   params, err := paginate.PaginQuery(
+       paginate.WithStruct(MyModel{}),
+       paginate.WithTable("my_table"),
+       paginate.WithColumn("my_table.*"),
+       paginate.WithPage(2),
+       paginate.WithItemsPerPage(10),
+       paginate.WithSort([]string{"created_at"}, []string{"true"}),
+       paginate.WithSearch("example"),
+   )
+   if err != nil {
+       log.Fatal(err)
+   }
+
+   // Generate SQL and arguments
+   sql, args := paginate.GenerateSQL(params)
+   countSQL, countArgs := paginate.GenerateCountQuery(params)
+   ```
+
+   The above example will output SQL queries and arguments like:
+
+   ```sql
+   SELECT my_table.* FROM my_table WHERE (my_table.name::TEXT ILIKE $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3
+   ```
+
+   SQL Arguments:
+
+   ```
+   [%example% 10 10]
+   ```
+
+   Count Query:
+
+   ```sql
+   SELECT COUNT(id) FROM my_table WHERE (my_table.name::TEXT ILIKE $1)
+   ```
+
+   Count Arguments:
+
+   ```
+   [%example%]
+   ```
+
+4. **Options and Customization:**
+
+   You can customize your paginated query using various options such as `WithPage`, `WithItemsPerPage`, `WithSort`, `WithSearch`, `WithSearchFields`, `WithVacuum`, `WithColumn`, `WithJoin`, `WithWhereCombining`, and `WithWhereClause`. These options allow you to tailor your query to specific requirements.
+
+   ```go
+   // Example options:
+   options := []paginate.Option{
+       paginate.WithPage(2),
+       paginate.WithItemsPerPage(20),
+       paginate.WithSort([]string{"created_at"}, []string{"true"}),
+       paginate.WithSearch("example"),
+       paginate.WithSearchFields([]string{"name"}),
+       paginate.WithVacuum(true),
+       paginate.WithColumn("my_table.*"),
+       paginate.WithJoin("INNER JOIN other_table ON my_table.id = other_table.my_table_id"),
+       paginate.WithWhereClause("status = ?", "active"),
+   }
+
+   params, err := paginate.PaginQuery(options...)
+   ```
+
+5. **Run your query:**
+
+   Once you've configured your paginated query, use the generated SQL and arguments to execute the query against your database.
+
+## Options
+
+### `WithNoOffset`
+
+Disable OFFSET and LIMIT for pagination. Useful for scenarios where OFFSET is not performant.
+
+### `WithMapArgs`
+
+Pass a map of custom arguments to be used in the WHERE clause.
+
+### `WithStruct`
+
+Specify the database model struct to be used for generating SQL queries.
+
+### `WithTable`
+
+Specify the main table for the paginated query.
+
+### `WithPage`
+
+Set the page number for pagination.
+
+### `WithItemsPerPage`
+
+Set the number of items per page.
+
+### `WithSearch`
+
+Specify a search term to filter results.
+
+### `WithSearchFields`
+
+Specify fields to search within.
+
+### `WithVacuum`
+
+Enable or disable VACUUM optimization for the query.
+
+### `WithColumn`
+
+Add a custom column to the SELECT clause.
+
+### `WithSort`
+
+Specify sorting columns and directions.
+
+### `WithJoin`
+
+Add a custom JOIN clause.
+
+### `WithWhereCombining`
+
+Specify the combining operator for multiple WHERE clauses.
+
+### `WithWhereClause`
+
+Add a custom WHERE clause.
+
+## Example
+
+Check the provided example in the code for a comprehensive demonstration of the package's usage.
 
 ```go
-
-// OLD VERSION
-import "github.com/booscaaa/go-paginate/paginate"
-
-query, queryCount, err := paginate.
-		Paginate("SELECT id, name FROM user").
-		Sort([]string{"name", "last_name"}).
-		Desc([]string{"true", "false"}).
-		Page(1).
-		RowsPerPage(50).
-		SearchBy("vinicius").
-		Query()
-
-if err != nil {
-  //handler error
-}
-
-// else use the query and queryCount to paginate with pq, pgx or other
-
-
-// NOW USE THIS
-import "github.com/booscaaa/go-paginate/paginate"
-
-pagin := paginate.Instance()
-query, queryCount := pagin.
-    Query("SELECT t.* FROM test t").
-    Sort([]string{"name", "last_name"}).
-    Desc([]string{"true", "false"}).
-    Page(3).
-    RowsPerPage(50).
-    SearchBy("vinicius", "t.id").
-    Select()
-
-// use the query and queryCount to paginate with pq, pgx or other
+// Example usage:
+params, err := paginate.PaginQuery(
+   // ... (options)
+)
 ```
+
+## Contribution
+
+Feel free to contribute to the `paginate` package by creating issues, submitting pull requests, or providing feedback. Your contributions are highly appreciated!
 
 ## Contributing
 
