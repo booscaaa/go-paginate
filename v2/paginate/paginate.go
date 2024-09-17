@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// paginQueryParams contém os parâmetros para a consulta paginada
+// paginQueryParams contains the parameters for the paginated query
 type paginQueryParams struct {
 	Page           int
 	ItemsPerPage   int
@@ -23,68 +23,14 @@ type paginQueryParams struct {
 	WhereClauses   []string
 	WhereArgs      []interface{}
 	WhereCombining string
+	Schema         string // New field to store the schema name
 	Table          string
 	Struct         interface{}
 	mapArgs        map[string]any
 	noOffset       bool
 }
 
-// type S struct {
-// 	DataCriacao time.Time `json:"dataCriacao" paginate:"desktop_log.data_criacao"`
-// 	Modulo      string    `json:"modulo" paginate:"desktop_log.modulo"`
-// 	NomeCliente string    `json:"nomeCliente" paginate:"cliente.nome"`
-// }
-
-// func main() {
-// 	// Exemplo de uso
-// 	// sortOptions := WithSort([]string{"dataCriacao"}, []string{"true"})
-// 	// columnOptions := WithColumn("dataCriacao")
-// 	// searchOptions := WithSearch("exemplo")
-// 	// pageOptions := WithPage(2)
-// 	// itemsPerPageOptions := WithItemsPerPage(20)
-// 	// searchFieldsOptions := WithSearchFields([]string{"dataCriacao", "programa", "modulo"})
-// 	// vacuumOptions := WithVacuum(false)
-
-// 	// Criação da instância PaginQueryParams
-// 	params, _ := PaginQuery(
-// 		WithStruct(S{}),
-// 		WithTable("desktop_log"),
-// 		WithColumn("desktop_log.*"),
-// 		WithColumn("cliente.nome as nome_cliente"),
-// 		WithColumn("cliente.cod_cli_cgi as cod_cli_cgi"),
-// 		WithJoin("INNER JOIN cliente cliente on cliente.id = desktop_log.id_cliente"),
-// 		WithPage(2),
-// 		WithItemsPerPage(1),
-// 		WithSort([]string{"dataCriacao", "nomeCliente"}, []string{"true", "false"}),
-// 		WithSearch("oficina"),
-// 		WithSearchFields([]string{"nomeCliente"}),
-// 		WithVacuum(true),
-// 		WithMapArgs(map[string]any{
-// 			"dataCriacao": "2023-09-12",
-// 			"id":          23591765,
-// 			"nomeCliente": "PARADISO GIOVANELLA TRANSP. LTDA",
-// 		}),
-// 		WithWhereClause("teste = ?", "tcha"),
-// 		WithNoOffet(true),
-// 	)
-
-// 	// Condição dinâmica
-// 	// x := "x"
-// 	// if x == "x" {
-// 	// 	WithWhereCombining("AND")(params)
-// 	// 	WithWhereClause("coluna5 = ?", x)(params)
-// 	// }
-
-// 	// Gere a consulta SQL e argumentos
-// 	sql, args := GenerateSQL(params)
-// 	countSQL, countArgs := GenerateCountQuery(params)
-// 	fmt.Println(sql)
-// 	fmt.Println(args)
-// 	fmt.Println(countSQL)
-// 	fmt.Println(countArgs)
-// }
-
-// Option é uma função que configura opções em paginQueryParams
+// Option is a function that configures options in paginQueryParams
 type Option func(*paginQueryParams)
 
 func WithNoOffset(noOffset bool) Option {
@@ -105,41 +51,43 @@ func WithStruct(s interface{}) Option {
 	}
 }
 
+// WithSchema configures the schema field
+func WithSchema(schema string) Option {
+	return func(params *paginQueryParams) {
+		params.Schema = schema
+	}
+}
+
 func WithTable(table string) Option {
 	return func(params *paginQueryParams) {
 		params.Table = table
 	}
 }
 
-// WithPage configura o campo Page
 func WithPage(page int) Option {
 	return func(params *paginQueryParams) {
 		params.Page = page
 	}
 }
 
-// WithItemsPerPage configura o campo ItemsPerPage
 func WithItemsPerPage(itemsPerPage int) Option {
 	return func(params *paginQueryParams) {
 		params.ItemsPerPage = itemsPerPage
 	}
 }
 
-// WithSearch configura o campo Search
 func WithSearch(search string) Option {
 	return func(params *paginQueryParams) {
 		params.Search = search
 	}
 }
 
-// WithSearchFields configura o campo SearchFields
 func WithSearchFields(searchFields []string) Option {
 	return func(params *paginQueryParams) {
 		params.SearchFields = searchFields
 	}
 }
 
-// WithVacuum configura o campo Vacuum
 func WithVacuum(vacuum bool) Option {
 	return func(params *paginQueryParams) {
 		params.Vacuum = vacuum
@@ -152,7 +100,6 @@ func WithColumn(column string) Option {
 	}
 }
 
-// WithSort configura os campos SortColumns e SortDirections
 func WithSort(sortColumns []string, sortDirections []string) Option {
 	return func(params *paginQueryParams) {
 		params.SortColumns = sortColumns
@@ -160,21 +107,18 @@ func WithSort(sortColumns []string, sortDirections []string) Option {
 	}
 }
 
-// WithJoin configura o campo Joins
 func WithJoin(join string) Option {
 	return func(params *paginQueryParams) {
 		params.Joins = append(params.Joins, join)
 	}
 }
 
-// WithWhereCombining especifica o operador de combinação para as cláusulas WHERE
 func WithWhereCombining(combining string) Option {
 	return func(params *paginQueryParams) {
 		params.WhereCombining = combining
 	}
 }
 
-// WithWhereClause adiciona uma cláusula WHERE
 func WithWhereClause(clause string, args ...interface{}) Option {
 	return func(params *paginQueryParams) {
 		params.WhereClauses = append(params.WhereClauses, clause)
@@ -183,15 +127,14 @@ func WithWhereClause(clause string, args ...interface{}) Option {
 }
 
 func PaginQuery(options ...Option) (*paginQueryParams, error) {
-	// Valores padrão
 	params := &paginQueryParams{
 		Page:           1,
 		ItemsPerPage:   10,
-		WhereCombining: "AND", // Combinação padrão é "AND"
+		WhereCombining: "AND", // Default combination is "AND"
 		noOffset:       false,
 	}
 
-	// Aplicar opções
+	// Apply options
 	for _, option := range options {
 		option(params)
 	}
@@ -208,18 +151,15 @@ func PaginQuery(options ...Option) (*paginQueryParams, error) {
 }
 
 func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
-	// Inicializa uma lista vazia de cláusulas SQL
 	clauses := []string{}
 	args := []interface{}{}
 
-	// Função auxiliar para obter o próximo número de argumento
 	nextArg := func() int {
 		argNum := len(args) + 1
-		args = append(args, nil) // Adicione um espaço reservado para o próximo argumento
+		args = append(args, nil)
 		return argNum
 	}
 
-	// Cláusula SELECT com colunas personalizadas
 	selectClause := "SELECT "
 	if len(params.Columns) > 0 {
 		selectClause += strings.Join(params.Columns, ", ")
@@ -228,16 +168,19 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 	}
 	clauses = append(clauses, selectClause)
 
-	// Cláusula FROM com tabela principal
-	clauses = append(clauses, fmt.Sprintf("FROM %s", params.Table))
-
-	// Cláusulas JOIN personalizadas
-	if len(params.Joins) > 0 {
-		joinClause := strings.Join(params.Joins, " ")
-		clauses = append(clauses, joinClause)
+	// FROM clause with schema if provided
+	if params.Schema != "" {
+		clauses = append(clauses, fmt.Sprintf("FROM %s.%s", params.Schema, params.Table))
+	} else {
+		clauses = append(clauses, fmt.Sprintf("FROM %s", params.Table))
 	}
 
-	// Cláusula WHERE para pesquisa
+	// JOIN clauses
+	if len(params.Joins) > 0 {
+		clauses = append(clauses, strings.Join(params.Joins, " "))
+	}
+
+	// WHERE clause for search
 	whereClauses := []string{}
 
 	if params.Search != "" && len(params.SearchFields) > 0 {
@@ -250,47 +193,21 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 			}
 		}
 		if len(searchConditions) > 0 {
-			searchClause := fmt.Sprintf("(%s)", strings.Join(searchConditions, " OR "))
-			whereClauses = append(whereClauses, searchClause)
+			whereClauses = append(whereClauses, fmt.Sprintf("(%s)", strings.Join(searchConditions, " OR ")))
 		}
 	}
 
-	// Adicionar cláusulas WHERE personalizadas
+	// Additional WHERE clauses
 	if len(params.WhereClauses) > 0 {
 		whereClauses = append(whereClauses, strings.Join(params.WhereClauses, fmt.Sprintf(" %s ", params.WhereCombining)))
 		args = append(args, params.WhereArgs...)
 	}
 
-	if params.noOffset {
-		// Paginação sem OFFSET e LIMIT
-		if params.Page > 1 && len(params.SortColumns) > 0 && len(params.SortDirections) == len(params.SortColumns) {
-			sortClauses := []string{}
-
-			idColumnName := getFieldName("id", "json", "paginate", params.Struct)
-			columnName := getFieldName(params.SortColumns[0], "json", "paginate", params.Struct)
-			if columnName != "" && idColumnName != "" {
-				argNum := nextArg()
-
-				argNumNext := nextArg()
-				sortClauses = append(sortClauses, fmt.Sprintf("(((%s = $%d) OR (%s %s $%d)) AND %s %s $%d)",
-					columnName, argNum, columnName, getComparisonOperator(params.SortDirections[0]), argNum, idColumnName, getComparisonOperator(params.SortDirections[0]), argNumNext))
-				args[len(args)-2] = params.mapArgs[params.SortColumns[0]]
-				args[len(args)-1] = params.mapArgs["id"]
-			}
-
-			if len(sortClauses) > 0 {
-				prevPageClause := fmt.Sprintf("(%s)", strings.Join(sortClauses, " AND "))
-				whereClauses = append(whereClauses, prevPageClause)
-			}
-		}
-	}
-
 	if len(whereClauses) > 0 {
-		whereClause := strings.Join(whereClauses, " AND ")
-		clauses = append(clauses, "WHERE "+whereClause)
+		clauses = append(clauses, "WHERE "+strings.Join(whereClauses, " AND "))
 	}
 
-	// Cláusula ORDER BY com suporte a múltiplas colunas e direções de ordenação
+	// ORDER BY clause
 	if len(params.SortColumns) > 0 && len(params.SortDirections) == len(params.SortColumns) {
 		sortClauses := []string{}
 		for i, column := range params.SortColumns {
@@ -304,93 +221,59 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 			}
 		}
 		if len(sortClauses) > 0 {
-			sortClause := fmt.Sprintf("ORDER BY %s", strings.Join(sortClauses, ", "))
-			clauses = append(clauses, sortClause)
+			clauses = append(clauses, "ORDER BY "+strings.Join(sortClauses, ", "))
 		}
 	}
 
-	// Cláusula LIMIT e OFFSET para paginação
+	// LIMIT and OFFSET for pagination
 	offset := (params.Page - 1) * params.ItemsPerPage
 	clauses = append(clauses, "LIMIT $"+fmt.Sprint(nextArg()))
 	args[len(args)-1] = params.ItemsPerPage
 
-	// suo
 	if !params.noOffset {
 		clauses = append(clauses, "OFFSET $"+fmt.Sprint(nextArg()))
 		args[len(args)-1] = offset
 	}
 
-	replacePlaceholders := func(query string, args []interface{}) (string, []interface{}) {
-		// Use um contador para acompanhar a posição do próximo argumento
-		// argCount := 1
-		// Encontre o último número de argumento disponível antes do primeiro ?
-		lastArg := 0
-		for i := 0; i < len(query); i++ {
-			if query[i] == '?' {
-				break
-			} else if query[i] == '$' {
-				// Se encontrarmos um placeholder existente, atualizamos o contador
-				lastArg, _ = strconv.Atoi(string(query[i+1]))
-			}
-		}
-		// Substitua todos os ? pelos placeholders $n, onde n é o último número encontrado e incrementado
-		for i := 0; i < len(query); i++ {
-			if query[i] == '?' {
-				query = query[:i] + "$" + strconv.Itoa(lastArg+1) + query[i+1:]
-				lastArg++
-			}
-		}
-		return query, args
-	}
-
-	// Junte todas as cláusulas em uma única consulta SQL
+	// Join all clauses into a single SQL query
 	query := strings.Join(clauses, " ")
 
-	// Substitua os placeholders ? pelos placeholders $n
+	// Replace placeholders and return
 	query, args = replacePlaceholders(query, args)
-
 	return query, args
 }
 
-func getComparisonOperator(direction string) string {
-	if direction == "true" {
-		return "<"
-	}
-	return ">"
-}
-
 func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
-	// Inicializa uma lista vazia de cláusulas SQL para a contagem
 	clauses := []string{}
 	args := []interface{}{}
 
-	// Função auxiliar para obter o próximo número de argumento
 	nextArg := func() int {
 		argNum := len(args) + 1
-		args = append(args, nil) // Adicione um espaço reservado para o próximo argumento
+		args = append(args, nil)
 		return argNum
 	}
 
-	// Cláusula SELECT para contagem
+	// SELECT COUNT clause
 	countSelectClause := "SELECT COUNT(id)"
 	idColumnName := getFieldName("id", "json", "paginate", params.Struct)
-
 	if idColumnName != "" {
 		countSelectClause = fmt.Sprintf("SELECT COUNT(%s)", idColumnName)
 	}
-
 	clauses = append(clauses, countSelectClause)
 
-	// Cláusula FROM com tabela principal
-	clauses = append(clauses, fmt.Sprintf("FROM %s", params.Table))
-
-	// Cláusulas JOIN personalizadas
-	if len(params.Joins) > 0 {
-		joinClause := strings.Join(params.Joins, " ")
-		clauses = append(clauses, joinClause)
+	// FROM clause with schema if provided
+	if params.Schema != "" {
+		clauses = append(clauses, fmt.Sprintf("FROM %s.%s", params.Schema, params.Table))
+	} else {
+		clauses = append(clauses, fmt.Sprintf("FROM %s", params.Table))
 	}
 
-	// Cláusula WHERE para pesquisa
+	// JOIN clauses
+	if len(params.Joins) > 0 {
+		clauses = append(clauses, strings.Join(params.Joins, " "))
+	}
+
+	// WHERE clause
 	whereClauses := []string{}
 
 	if params.Search != "" && len(params.SearchFields) > 0 {
@@ -403,64 +286,54 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 			}
 		}
 		if len(searchConditions) > 0 {
-			searchClause := fmt.Sprintf("(%s)", strings.Join(searchConditions, " OR "))
-			whereClauses = append(whereClauses, searchClause)
+			whereClauses = append(whereClauses, fmt.Sprintf("(%s)", strings.Join(searchConditions, " OR ")))
 		}
 	}
 
-	// Adicionar cláusulas WHERE personalizadas
 	if len(params.WhereClauses) > 0 {
 		whereClauses = append(whereClauses, strings.Join(params.WhereClauses, fmt.Sprintf(" %s ", params.WhereCombining)))
 		args = append(args, params.WhereArgs...)
 	}
 
 	if len(whereClauses) > 0 {
-		whereClause := strings.Join(whereClauses, " AND ")
-		clauses = append(clauses, "WHERE "+whereClause)
+		clauses = append(clauses, "WHERE "+strings.Join(whereClauses, " AND "))
 	}
 
-	replacePlaceholders := func(query string, args []interface{}) (string, []interface{}) {
-		// Use um contador para acompanhar a posição do próximo argumento
-		// argCount := 1
-		// Encontre o último número de argumento disponível antes do primeiro ?
-		lastArg := 0
-		for i := 0; i < len(query); i++ {
-			if query[i] == '?' {
-				break
-			} else if query[i] == '$' {
-				// Se encontrarmos um placeholder existente, atualizamos o contador
-				lastArg, _ = strconv.Atoi(string(query[i+1]))
-			}
-		}
-		// Substitua todos os ? pelos placeholders $n, onde n é o último número encontrado e incrementado
-		for i := 0; i < len(query); i++ {
-			if query[i] == '?' {
-				query = query[:i] + "$" + strconv.Itoa(lastArg+1) + query[i+1:]
-				lastArg++
-			}
-		}
-		return query, args
-	}
-
-	// Junte todas as cláusulas em uma única consulta SQL
 	query := strings.Join(clauses, " ")
 
-	// Substitua os placeholders ? pelos placeholders $n
+	// Replace placeholders
 	query, args = replacePlaceholders(query, args)
 
-	// Verifica se VACUUM deve ser aplicado
 	if params.Vacuum {
 		countQuery := "SELECT count_estimate('" + query + "');"
 		countQuery = strings.Replace(countQuery, "COUNT(id)", "1", -1)
-
 		re := regexp.MustCompile(`(\$[0-9]+)`)
 		countQuery = re.ReplaceAllStringFunc(countQuery, func(match string) string {
 			return "''" + match + "''"
 		})
-
 		return countQuery, args
 	}
 
+	return query, args
+}
+
+// Helper functions to replace placeholders and extract field names
+
+func replacePlaceholders(query string, args []interface{}) (string, []interface{}) {
+	lastArg := 0
+	for i := 0; i < len(query); i++ {
+		if query[i] == '?' {
+			break
+		} else if query[i] == '$' {
+			lastArg, _ = strconv.Atoi(string(query[i+1]))
+		}
+	}
+	for i := 0; i < len(query); i++ {
+		if query[i] == '?' {
+			query = query[:i] + "$" + strconv.Itoa(lastArg+1) + query[i+1:]
+			lastArg++
+		}
+	}
 	return query, args
 }
 

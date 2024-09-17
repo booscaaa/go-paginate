@@ -14,9 +14,11 @@ type S struct {
 }
 
 func TestPaginQuery(t *testing.T) {
-	// Test case 1: Valid parameters
+	// Test case 1: Valid parameters with dynamic schema
+	schema := "dynamic_schema" // Use dynamic schema
 	params, err := PaginQuery(
 		WithStruct(S{}),
+		WithSchema(schema), // Use dynamic schema
 		WithTable("desktop_log"),
 		WithColumn("desktop_log.*"),
 		WithPage(2),
@@ -28,9 +30,9 @@ func TestPaginQuery(t *testing.T) {
 		WithMapArgs(map[string]interface{}{
 			"dataCriacao": "2023-09-12",
 			"id":          23591765,
-			"nomeCliente": "PARADISO GIOVANELLA TRANSP. LTDA",
+			"nomeCliente": "EMPRESA. LTDA",
 		}),
-		WithWhereClause("teste = ?", "tcha"),
+		WithWhereClause("teste = ?", "argumento"),
 		WithNoOffset(true),
 	)
 
@@ -42,8 +44,9 @@ func TestPaginQuery(t *testing.T) {
 		t.Error("Expected non-nil paginQueryParams")
 	}
 
-	// Test case 2: Missing required parameters
+	// Test case 2: Missing required parameters (expect error)
 	_, err = PaginQuery(
+		WithSchema(schema), // Use dynamic schema
 		WithTable("desktop_log"),
 		WithItemsPerPage(10),
 		// Missing WithStruct
@@ -55,16 +58,18 @@ func TestPaginQuery(t *testing.T) {
 }
 
 func TestGenerateSQL(t *testing.T) {
-	// Test case 1: Basic query with default parameters
+	// Test case 1: Basic query with dynamic schema
+	schema := "dynamic_schema"
 	params := &paginQueryParams{
 		Page:         1,
 		ItemsPerPage: 10,
 		Table:        "desktop_log",
+		Schema:       schema, // Use dynamic schema
 		Struct:       S{},
 	}
 	sql, args := GenerateSQL(params)
 
-	expectedSQL := "SELECT * FROM desktop_log LIMIT $1 OFFSET $2"
+	expectedSQL := "SELECT * FROM dynamic_schema.desktop_log LIMIT $1 OFFSET $2"
 	expectedArgs := []interface{}{10, 0}
 
 	if sql != expectedSQL {
@@ -75,7 +80,7 @@ func TestGenerateSQL(t *testing.T) {
 		t.Errorf("Expected args: %v, Got: %v", expectedArgs, args)
 	}
 
-	// Test case 2: Query with search conditions, custom columns, joins, and sorting
+	// Test case 2: Query with search conditions, custom columns, joins, sorting, and dynamic schema
 	params = &paginQueryParams{
 		Page:           2,
 		ItemsPerPage:   1,
@@ -86,18 +91,19 @@ func TestGenerateSQL(t *testing.T) {
 		SortColumns:    []string{"dataCriacao", "nomeCliente"},
 		SortDirections: []string{"true", "false"},
 		WhereClauses:   []string{"teste = ?"},
-		WhereArgs:      []interface{}{"tcha"},
+		WhereArgs:      []interface{}{"argumento"},
 		Table:          "desktop_log",
+		Schema:         schema, // Use dynamic schema
 		Struct:         S{},
 	}
 	sql, args = GenerateSQL(params)
 
-	expectedSQL = "SELECT desktop_log.*, cliente.nome as nome_cliente FROM desktop_log " +
-		"INNER JOIN cliente cliente on cliente.id = desktop_log.id_cliente " +
+	expectedSQL = "SELECT desktop_log.*, cliente.nome as nome_cliente FROM dynamic_schema.desktop_log " +
+		"INNER JOIN cliente cliente on cliente.id = dynamic_schema.desktop_log.id_cliente " +
 		"WHERE (cliente.nome::TEXT ILIKE $1) AND teste = $2 " +
 		"ORDER BY desktop_log.data_criacao DESC, cliente.nome ASC " +
 		"LIMIT $3 OFFSET $4"
-	expectedArgs = []interface{}{"%example%", "tcha", 1, 1}
+	expectedArgs = []interface{}{"%example%", "argumento", 1, 1}
 
 	if sql != expectedSQL {
 		t.Errorf("Expected SQL: %s, Got: %s", expectedSQL, sql)
@@ -109,16 +115,18 @@ func TestGenerateSQL(t *testing.T) {
 }
 
 func TestGenerateCountQuery(t *testing.T) {
-	// Test case 1: Basic count query with default parameters
+	// Test case 1: Basic count query with dynamic schema
+	schema := "dynamic_schema"
 	params := &paginQueryParams{
 		Page:         1,
 		ItemsPerPage: 10,
 		Table:        "desktop_log",
+		Schema:       schema, // Use dynamic schema
 		Struct:       S{},
 	}
 	countSQL, countArgs := GenerateCountQuery(params)
 
-	expectedCountSQL := "SELECT COUNT(id) FROM desktop_log"
+	expectedCountSQL := "SELECT COUNT(id) FROM dynamic_schema.desktop_log"
 	expectedCountArgs := []interface{}{}
 
 	if countSQL != expectedCountSQL {
@@ -129,7 +137,7 @@ func TestGenerateCountQuery(t *testing.T) {
 		t.Errorf("Expected count args: %v, Got: %v", expectedCountArgs, countArgs)
 	}
 
-	// Test case 2: Count query with search conditions, custom columns, and joins
+	// Test case 2: Count query with search conditions, joins, and dynamic schema
 	params = &paginQueryParams{
 		Page:         2,
 		ItemsPerPage: 1,
@@ -138,12 +146,13 @@ func TestGenerateCountQuery(t *testing.T) {
 		Columns:      []string{"desktop_log.*", "cliente.nome as nome_cliente"},
 		Joins:        []string{"INNER JOIN cliente cliente on cliente.id = desktop_log.id_cliente"},
 		Table:        "desktop_log",
+		Schema:       schema, // Use dynamic schema
 		Struct:       S{},
 	}
 	countSQL, countArgs = GenerateCountQuery(params)
 
-	expectedCountSQL = "SELECT COUNT(id) FROM desktop_log " +
-		"INNER JOIN cliente cliente on cliente.id = desktop_log.id_cliente " +
+	expectedCountSQL = "SELECT COUNT(id) FROM dynamic_schema.desktop_log " +
+		"INNER JOIN cliente cliente on cliente.id = dynamic_schema.desktop_log.id_cliente " +
 		"WHERE (cliente.nome::TEXT ILIKE $1)"
 	expectedCountArgs = []interface{}{"%example%"}
 
@@ -156,25 +165,7 @@ func TestGenerateCountQuery(t *testing.T) {
 	}
 }
 
-func TestGetComparisonOperator(t *testing.T) {
-	// Test case 1: Sorting direction is true (descending)
-	operator := getComparisonOperator("true")
-	expectedOperator := "<"
-	if operator != expectedOperator {
-		t.Errorf("Expected operator: %s, Got: %s", expectedOperator, operator)
-	}
-
-	// Test case 2: Sorting direction is false (ascending)
-	operator = getComparisonOperator("false")
-	expectedOperator = ">"
-	if operator != expectedOperator {
-		t.Errorf("Expected operator: %s, Got: %s", expectedOperator, operator)
-	}
-}
-
 func TestGetFieldName(t *testing.T) {
-	// Add test cases for GetFieldName function...
-
 	// Test case 1: Valid field tag
 	fieldName := getFieldName("dataCriacao", "json", "paginate", S{})
 	if fieldName != "desktop_log.data_criacao" {
