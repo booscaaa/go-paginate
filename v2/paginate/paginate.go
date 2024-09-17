@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
-// paginQueryParams contains the parameters for the paginated query
-type paginQueryParams struct {
+// QueryParams contains the parameters for the paginated query.
+type QueryParams struct {
 	Page           int
 	ItemsPerPage   int
 	Search         string
@@ -23,115 +22,130 @@ type paginQueryParams struct {
 	WhereClauses   []string
 	WhereArgs      []interface{}
 	WhereCombining string
-	Schema         string // New field to store the schema name
+	Schema         string
 	Table          string
 	Struct         interface{}
-	mapArgs        map[string]any
-	noOffset       bool
+	MapArgs        map[string]interface{}
+	NoOffset       bool
 }
 
-// Option is a function that configures options in paginQueryParams
-type Option func(*paginQueryParams)
+// Option is a function that configures options in QueryParams.
+type Option func(*QueryParams)
 
+// WithNoOffset sets the NoOffset option.
 func WithNoOffset(noOffset bool) Option {
-	return func(params *paginQueryParams) {
-		params.noOffset = noOffset
+	return func(params *QueryParams) {
+		params.NoOffset = noOffset
 	}
 }
 
-func WithMapArgs(mapArgs map[string]any) Option {
-	return func(params *paginQueryParams) {
-		params.mapArgs = mapArgs
+// WithMapArgs sets the MapArgs option.
+func WithMapArgs(mapArgs map[string]interface{}) Option {
+	return func(params *QueryParams) {
+		params.MapArgs = mapArgs
 	}
 }
 
+// WithStruct sets the Struct option.
 func WithStruct(s interface{}) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.Struct = s
 	}
 }
 
-// WithSchema configures the schema field
+// WithSchema sets the Schema option.
 func WithSchema(schema string) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.Schema = schema
 	}
 }
 
+// WithTable sets the Table option.
 func WithTable(table string) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.Table = table
 	}
 }
 
+// WithPage sets the Page option.
 func WithPage(page int) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.Page = page
 	}
 }
 
+// WithItemsPerPage sets the ItemsPerPage option.
 func WithItemsPerPage(itemsPerPage int) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.ItemsPerPage = itemsPerPage
 	}
 }
 
+// WithSearch sets the Search option.
 func WithSearch(search string) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.Search = search
 	}
 }
 
+// WithSearchFields sets the SearchFields option.
 func WithSearchFields(searchFields []string) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.SearchFields = searchFields
 	}
 }
 
+// WithVacuum sets the Vacuum option.
 func WithVacuum(vacuum bool) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.Vacuum = vacuum
 	}
 }
 
+// WithColumn adds a column to the Columns option.
 func WithColumn(column string) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.Columns = append(params.Columns, column)
 	}
 }
 
-func WithSort(sortColumns []string, sortDirections []string) Option {
-	return func(params *paginQueryParams) {
+// WithSort sets the SortColumns and SortDirections options.
+func WithSort(sortColumns, sortDirections []string) Option {
+	return func(params *QueryParams) {
 		params.SortColumns = sortColumns
 		params.SortDirections = sortDirections
 	}
 }
 
+// WithJoin adds a join clause to the Joins option.
 func WithJoin(join string) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.Joins = append(params.Joins, join)
 	}
 }
 
+// WithWhereCombining sets the WhereCombining option.
 func WithWhereCombining(combining string) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.WhereCombining = combining
 	}
 }
 
+// WithWhereClause adds a where clause and its arguments.
 func WithWhereClause(clause string, args ...interface{}) Option {
-	return func(params *paginQueryParams) {
+	return func(params *QueryParams) {
 		params.WhereClauses = append(params.WhereClauses, clause)
 		params.WhereArgs = append(params.WhereArgs, args...)
 	}
 }
 
-func PaginQuery(options ...Option) (*paginQueryParams, error) {
-	params := &paginQueryParams{
+// NewPaginator creates a new QueryParams instance with the given options.
+func NewPaginator(options ...Option) (*QueryParams, error) {
+	params := &QueryParams{
 		Page:           1,
 		ItemsPerPage:   10,
-		WhereCombining: "AND", // Default combination is "AND"
-		noOffset:       false,
+		WhereCombining: "AND",
+		NoOffset:       false,
 	}
 
 	// Apply options
@@ -139,6 +153,7 @@ func PaginQuery(options ...Option) (*paginQueryParams, error) {
 		option(params)
 	}
 
+	// Validation
 	if params.Table == "" {
 		return nil, errors.New("principal table is required")
 	}
@@ -150,16 +165,12 @@ func PaginQuery(options ...Option) (*paginQueryParams, error) {
 	return params, nil
 }
 
-func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
-	clauses := []string{}
-	args := []interface{}{}
+// GenerateSQL generates the paginated SQL query and its arguments.
+func (params *QueryParams) GenerateSQL() (string, []interface{}) {
+	var clauses []string
+	var args []interface{}
 
-	nextArg := func() int {
-		argNum := len(args) + 1
-		args = append(args, nil)
-		return argNum
-	}
-
+	// SELECT clause
 	selectClause := "SELECT "
 	if len(params.Columns) > 0 {
 		selectClause += strings.Join(params.Columns, ", ")
@@ -168,90 +179,48 @@ func GenerateSQL(params *paginQueryParams) (string, []interface{}) {
 	}
 	clauses = append(clauses, selectClause)
 
-	// FROM clause with schema if provided
+	// FROM clause
+	fromClause := fmt.Sprintf("FROM %s", params.Table)
 	if params.Schema != "" {
-		clauses = append(clauses, fmt.Sprintf("FROM %s.%s", params.Schema, params.Table))
-	} else {
-		clauses = append(clauses, fmt.Sprintf("FROM %s", params.Table))
+		fromClause = fmt.Sprintf("FROM %s.%s", params.Schema, params.Table)
 	}
+	clauses = append(clauses, fromClause)
 
 	// JOIN clauses
 	if len(params.Joins) > 0 {
 		clauses = append(clauses, strings.Join(params.Joins, " "))
 	}
 
-	// WHERE clause for search
-	whereClauses := []string{}
-
-	if params.Search != "" && len(params.SearchFields) > 0 {
-		searchConditions := []string{}
-		for _, field := range params.SearchFields {
-			columnName := getFieldName(field, "json", "paginate", params.Struct)
-			if columnName != "" {
-				searchConditions = append(searchConditions, fmt.Sprintf("%s::TEXT ILIKE $%d", columnName, nextArg()))
-				args[len(args)-1] = "%" + params.Search + "%"
-			}
-		}
-		if len(searchConditions) > 0 {
-			whereClauses = append(whereClauses, fmt.Sprintf("(%s)", strings.Join(searchConditions, " OR ")))
-		}
-	}
-
-	// Additional WHERE clauses
-	if len(params.WhereClauses) > 0 {
-		whereClauses = append(whereClauses, strings.Join(params.WhereClauses, fmt.Sprintf(" %s ", params.WhereCombining)))
-		args = append(args, params.WhereArgs...)
-	}
-
+	// WHERE clause
+	whereClauses, whereArgs := params.buildWhereClauses()
 	if len(whereClauses) > 0 {
 		clauses = append(clauses, "WHERE "+strings.Join(whereClauses, " AND "))
+		args = append(args, whereArgs...)
 	}
 
 	// ORDER BY clause
-	if len(params.SortColumns) > 0 && len(params.SortDirections) == len(params.SortColumns) {
-		sortClauses := []string{}
-		for i, column := range params.SortColumns {
-			columnName := getFieldName(column, "json", "paginate", params.Struct)
-			if columnName != "" {
-				direction := "ASC"
-				if params.SortDirections[i] == "true" {
-					direction = "DESC"
-				}
-				sortClauses = append(sortClauses, fmt.Sprintf("%s %s", columnName, direction))
-			}
-		}
-		if len(sortClauses) > 0 {
-			clauses = append(clauses, "ORDER BY "+strings.Join(sortClauses, ", "))
-		}
+	orderClause := params.buildOrderClause()
+	if orderClause != "" {
+		clauses = append(clauses, orderClause)
 	}
 
-	// LIMIT and OFFSET for pagination
-	offset := (params.Page - 1) * params.ItemsPerPage
-	clauses = append(clauses, "LIMIT $"+fmt.Sprint(nextArg()))
-	args[len(args)-1] = params.ItemsPerPage
+	// LIMIT and OFFSET
+	limitOffsetClause, limitOffsetArgs := params.buildLimitOffsetClause()
+	clauses = append(clauses, limitOffsetClause)
+	args = append(args, limitOffsetArgs...)
 
-	if !params.noOffset {
-		clauses = append(clauses, "OFFSET $"+fmt.Sprint(nextArg()))
-		args[len(args)-1] = offset
-	}
-
-	// Join all clauses into a single SQL query
+	// Combine all clauses
 	query := strings.Join(clauses, " ")
 
-	// Replace placeholders and return
+	// Replace placeholders
 	query, args = replacePlaceholders(query, args)
 	return query, args
 }
 
-func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
-	clauses := []string{}
-	args := []interface{}{}
-
-	nextArg := func() int {
-		argNum := len(args) + 1
-		args = append(args, nil)
-		return argNum
-	}
+// GenerateCountQuery generates the SQL query for counting total records.
+func (params *QueryParams) GenerateCountQuery() (string, []interface{}) {
+	var clauses []string
+	var args []interface{}
 
 	// SELECT COUNT clause
 	countSelectClause := "SELECT COUNT(id)"
@@ -261,12 +230,12 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 	}
 	clauses = append(clauses, countSelectClause)
 
-	// FROM clause with schema if provided
+	// FROM clause
+	fromClause := fmt.Sprintf("FROM %s", params.Table)
 	if params.Schema != "" {
-		clauses = append(clauses, fmt.Sprintf("FROM %s.%s", params.Schema, params.Table))
-	} else {
-		clauses = append(clauses, fmt.Sprintf("FROM %s", params.Table))
+		fromClause = fmt.Sprintf("FROM %s.%s", params.Schema, params.Table)
 	}
+	clauses = append(clauses, fromClause)
 
 	// JOIN clauses
 	if len(params.Joins) > 0 {
@@ -274,31 +243,13 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 	}
 
 	// WHERE clause
-	whereClauses := []string{}
-
-	if params.Search != "" && len(params.SearchFields) > 0 {
-		searchConditions := []string{}
-		for _, field := range params.SearchFields {
-			columnName := getFieldName(field, "json", "paginate", params.Struct)
-			if columnName != "" {
-				searchConditions = append(searchConditions, fmt.Sprintf("%s::TEXT ILIKE $%d", columnName, nextArg()))
-				args[len(args)-1] = "%" + params.Search + "%"
-			}
-		}
-		if len(searchConditions) > 0 {
-			whereClauses = append(whereClauses, fmt.Sprintf("(%s)", strings.Join(searchConditions, " OR ")))
-		}
-	}
-
-	if len(params.WhereClauses) > 0 {
-		whereClauses = append(whereClauses, strings.Join(params.WhereClauses, fmt.Sprintf(" %s ", params.WhereCombining)))
-		args = append(args, params.WhereArgs...)
-	}
-
+	whereClauses, whereArgs := params.buildWhereClauses()
 	if len(whereClauses) > 0 {
 		clauses = append(clauses, "WHERE "+strings.Join(whereClauses, " AND "))
+		args = append(args, whereArgs...)
 	}
 
+	// Combine all clauses
 	query := strings.Join(clauses, " ")
 
 	// Replace placeholders
@@ -317,36 +268,111 @@ func GenerateCountQuery(params *paginQueryParams) (string, []interface{}) {
 	return query, args
 }
 
-// Helper functions to replace placeholders and extract field names
+// buildWhereClauses constructs the WHERE clauses and arguments.
+func (params *QueryParams) buildWhereClauses() ([]string, []interface{}) {
+	var whereClauses []string
+	var args []interface{}
 
-func replacePlaceholders(query string, args []interface{}) (string, []interface{}) {
-	lastArg := 0
-	for i := 0; i < len(query); i++ {
-		if query[i] == '?' {
-			break
-		} else if query[i] == '$' {
-			lastArg, _ = strconv.Atoi(string(query[i+1]))
+	// Search conditions
+	if params.Search != "" && len(params.SearchFields) > 0 {
+		var searchConditions []string
+		for _, field := range params.SearchFields {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				searchConditions = append(searchConditions, fmt.Sprintf("%s::TEXT ILIKE ?", columnName))
+				args = append(args, "%"+params.Search+"%")
+			}
+		}
+		if len(searchConditions) > 0 {
+			whereClauses = append(whereClauses, "("+strings.Join(searchConditions, " OR ")+")")
 		}
 	}
-	for i := 0; i < len(query); i++ {
-		if query[i] == '?' {
-			query = query[:i] + "$" + strconv.Itoa(lastArg+1) + query[i+1:]
-			lastArg++
-		}
+
+	// Additional WHERE clauses
+	if len(params.WhereClauses) > 0 {
+		whereClauses = append(whereClauses, strings.Join(params.WhereClauses, fmt.Sprintf(" %s ", params.WhereCombining)))
+		args = append(args, params.WhereArgs...)
 	}
-	return query, args
+
+	return whereClauses, args
 }
 
-func getFieldName(tag, key, keyTarget string, s interface{}) (fieldname string) {
+// buildOrderClause constructs the ORDER BY clause.
+func (params *QueryParams) buildOrderClause() string {
+
+	if len(params.SortColumns) == 0 || len(params.SortDirections) != len(params.SortColumns) {
+		fmt.Println(params.SortColumns)
+		fmt.Println(params.SortDirections)
+		return ""
+	}
+
+	var sortClauses []string
+	for i, column := range params.SortColumns {
+		columnName := getFieldName(column, "json", "paginate", params.Struct)
+		if columnName != "" {
+			direction := "ASC"
+			if strings.ToLower(params.SortDirections[i]) == "true" {
+				direction = "DESC"
+			}
+			sortClauses = append(sortClauses, fmt.Sprintf("%s %s", columnName, direction))
+		}
+	}
+
+	fmt.Println(sortClauses)
+	if len(sortClauses) > 0 {
+		return "ORDER BY " + strings.Join(sortClauses, ", ")
+	}
+	return ""
+}
+
+// buildLimitOffsetClause constructs the LIMIT and OFFSET clauses.
+func (params *QueryParams) buildLimitOffsetClause() (string, []interface{}) {
+	var clauses []string
+	var args []interface{}
+
+	clauses = append(clauses, "LIMIT ?")
+	args = append(args, params.ItemsPerPage)
+
+	if !params.NoOffset {
+		offset := (params.Page - 1) * params.ItemsPerPage
+		clauses = append(clauses, "OFFSET ?")
+		args = append(args, offset)
+	}
+
+	return strings.Join(clauses, " "), args
+}
+
+// Helper functions
+
+// replacePlaceholders replaces '?' with positional placeholders like '$1', '$2', etc.
+func replacePlaceholders(query string, args []interface{}) (string, []interface{}) {
+	var newQuery strings.Builder
+	argIndex := 1
+	for _, char := range query {
+		if char == '?' {
+			newQuery.WriteString(fmt.Sprintf("$%d", argIndex))
+			argIndex++
+		} else {
+			newQuery.WriteRune(char)
+		}
+	}
+	return newQuery.String(), args
+}
+
+// getFieldName retrieves the column name from struct tags based on the given key.
+func getFieldName(tag, key, keyTarget string, s interface{}) string {
 	rt := reflect.TypeOf(s)
+	if rt.Kind() == reflect.Ptr {
+		rt = rt.Elem()
+	}
 	if rt.Kind() != reflect.Struct {
-		panic("bad type")
+		panic("struct type required")
 	}
 	for i := 0; i < rt.NumField(); i++ {
-		f := rt.Field(i)
-		v := strings.Split(f.Tag.Get(key), ",")[0]
-		if v == tag {
-			return f.Tag.Get(keyTarget)
+		field := rt.Field(i)
+		tagValue := strings.Split(field.Tag.Get(key), ",")[0]
+		if tagValue == tag {
+			return field.Tag.Get(keyTarget)
 		}
 	}
 	return ""
