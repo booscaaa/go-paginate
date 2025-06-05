@@ -464,7 +464,8 @@ func (b *PaginatorBuilder) fromMap(data map[string]any) *PaginatorBuilder {
 		}
 	}
 
-	// Handle sorting
+	// Handle sorting - supports both single sort field and multiple sort fields
+	// New sort pattern takes priority over legacy sort_columns/sort_directions
 	if sort, ok := data["sort"]; ok {
 		if sortSlice := toStringSlice(sort); len(sortSlice) > 0 {
 			for _, sortField := range sortSlice {
@@ -472,6 +473,31 @@ func (b *PaginatorBuilder) fromMap(data map[string]any) *PaginatorBuilder {
 					b.OrderByDesc(strings.TrimPrefix(sortField, "-"))
 				} else {
 					b.OrderBy(sortField)
+				}
+			}
+		}
+	} else {
+		// Handle legacy sort_columns and sort_directions for backward compatibility
+		// Only process if new sort pattern is not present
+		if sortColumns, ok := data["sort_columns"]; ok {
+			if sortColumnsSlice := toStringSlice(sortColumns); len(sortColumnsSlice) > 0 {
+				var sortDirectionsSlice []string
+				if sortDirections, ok := data["sort_directions"]; ok {
+					sortDirectionsSlice = toStringSlice(sortDirections)
+				}
+
+				// Apply sorting for each column
+				for i, column := range sortColumnsSlice {
+					direction := "ASC" // default direction
+					if i < len(sortDirectionsSlice) {
+						direction = sortDirectionsSlice[i]
+					}
+
+					if strings.ToUpper(direction) == "DESC" {
+						b.OrderByDesc(column)
+					} else {
+						b.OrderBy(column)
+					}
 				}
 			}
 		}

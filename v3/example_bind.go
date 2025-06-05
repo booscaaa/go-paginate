@@ -106,8 +106,8 @@ func main() {
 
 // simulateHTTPHandler simula como usar o bind em um handler HTTP real
 func simulateHTTPHandler() {
-	// Simular uma URL de request HTTP
-	requestURL := "https://api.example.com/users?page=2&limit=20&search=john&search_fields=name,email&search_or[status]=active&search_or[status]=pending&gte[age]=18&sort_columns=name,created_at&sort_directions=ASC,DESC"
+	// Simular uma URL de request HTTP com novo padrão de sort
+	requestURL := "https://api.example.com/users?page=2&limit=20&search=john&search_fields=name,email&search_or[status]=active&search_or[status]=pending&gte[age]=18&sort=name&sort=-created_at"
 
 	// Parse da URL
 	parsedURL, err := url.Parse(requestURL)
@@ -131,10 +131,44 @@ func simulateHTTPHandler() {
 	fmt.Printf("  Search: %s\n", paginationParams.Search)
 	fmt.Printf("  SearchFields: %v\n", paginationParams.SearchFields)
 	fmt.Printf("  SearchOr: %v\n", paginationParams.SearchOr)
+	fmt.Printf("  Sort: %v\n", paginationParams.Sort)
 	fmt.Printf("  SortColumns: %v\n", paginationParams.SortColumns)
 	fmt.Printf("  SortDirections: %v\n", paginationParams.SortDirections)
 	fmt.Printf("  Gte: %v\n", paginationParams.Gte)
 
 	// Agora você pode usar esses parâmetros para construir sua query de banco de dados
 	fmt.Println("\n✅ Parâmetros prontos para uso na construção da query!")
+
+	// Exemplo adicional: Demonstrar como usar com FromStruct no builder
+	fmt.Println("\n6. Exemplo usando FromStruct com novo padrão de sort:")
+	demonstrateFromStructWithSort(paginationParams)
+}
+
+// demonstrateFromStructWithSort demonstra como usar FromStruct com o novo padrão de sort
+func demonstrateFromStructWithSort(params *paginate.PaginationParams) {
+	// Definir uma struct de exemplo para o modelo
+	type User struct {
+		ID        int    `json:"id" paginate:"id"`
+		Name      string `json:"name" paginate:"name"`
+		Email     string `json:"email" paginate:"email"`
+		Status    string `json:"status" paginate:"status"`
+		Age       int    `json:"age" paginate:"age"`
+		CreatedAt string `json:"created_at" paginate:"created_at"`
+	}
+
+	// Criar builder e usar FromStruct
+	builder := paginate.NewBuilder().
+		Table("users").
+		Model(User{}).
+		FromStruct(params)
+
+	// Gerar SQL
+	sql, args, err := builder.BuildSQL()
+	if err != nil {
+		log.Fatalf("Erro ao gerar SQL: %v", err)
+	}
+
+	fmt.Printf("SQL gerado: %s\n", sql)
+	fmt.Printf("Args: %v\n", args)
+	fmt.Println("\n✅ Sort funcionando corretamente com FromStruct!")
 }

@@ -15,6 +15,7 @@ type PaginationParams struct {
 	ItemsPerPage   int                 `query:"items_per_page"`
 	Search         string              `query:"search"`
 	SearchFields   []string            `query:"search_fields"`
+	Sort           []string            `query:"sort"`
 	SortColumns    []string            `query:"sort_columns"`
 	SortDirections []string            `query:"sort_directions"`
 	Columns        []string            `query:"columns"`
