@@ -1108,13 +1108,13 @@ func init() {
 ## 📊 Performance Benchmarks
 
 ```
-BenchmarkFluentAPI-8           1000000    1234 ns/op    512 B/op    8 allocs/op
-BenchmarkTraditionalAPI-8      800000     1456 ns/op    640 B/op    12 allocs/op
-BenchmarkAutomaticBinding-8    600000     2134 ns/op    896 B/op    16 allocs/op
-BenchmarkSQLGeneration-8       2000000    678 ns/op     256 B/op    4 allocs/op
+BenchmarkFluentAPI-20          204253     5559 ns/op    4384 B/op   105 allocs/op
+BenchmarkTraditionalAPI-20     269164     4057 ns/op    3130 B/op    85 allocs/op
+BenchmarkAutomaticBinding-20   148874     7935 ns/op    5540 B/op   124 allocs/op
+BenchmarkSQLGeneration-20      307086     3750 ns/op    2490 B/op    76 allocs/op
 ```
 
-_Benchmarks run on MacBook Pro M1, Go 1.24.2_
+_Benchmarks run on 12th Gen Intel(R) Core(TM) i7-12700, Go 1.24.2_
 
 ---
 
@@ -1208,14 +1208,9 @@ git push origin feature/amazing-feature
 
 - 📖 **[Complete Bind Documentation](v3/BIND_README.md)** - Detailed guide on query parameter binding
 - 🔗 **[Go Reference](https://pkg.go.dev/github.com/booscaaa/go-paginate/v3)** - Complete API documentation
-- 📝 **[Examples Repository](https://github.com/booscaaa/go-paginate/tree/master/v3)** - More example code
+- 📝 **[Examples Repository](https://github.com/booscaaa/go-paginate/examples)** - More example code
 
 ---
-
-## 📞 Support & Contact
-
-This project is part of my personal portfolio. I'll be happy to receive feedback about the project, code, structure, or anything that could make me a better developer!
-
 
 ### Support the Project
 
