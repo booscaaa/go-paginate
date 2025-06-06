@@ -185,6 +185,18 @@ func (b *PaginatorBuilder) EqOr(field string, values ...any) *PaginatorBuilder {
 	return b
 }
 
+// EqAnd adds AND equality conditions
+func (b *PaginatorBuilder) EqAnd(field string, values ...any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.EqAnd == nil {
+		b.params.EqAnd = make(map[string][]any)
+	}
+	b.params.EqAnd[field] = append(b.params.EqAnd[field], values...)
+	return b
+}
+
 // WhereEqualsOr is deprecated, use EqOr instead
 func (b *PaginatorBuilder) WhereEqualsOr(field string, values ...any) *PaginatorBuilder {
 	return b.EqOr(field, values...)
@@ -380,112 +392,136 @@ func (b *PaginatorBuilder) fromMap(data map[string]any) *PaginatorBuilder {
 		}
 	}
 
-	// Handle likeor
-	if likeOr, ok := data["likeor"]; ok {
-		if likeOrMap, ok := likeOr.(map[string]any); ok {
-			for field, values := range likeOrMap {
-				if valueSlice := toStringSlice(values); len(valueSlice) > 0 {
-					b.LikeOr(field, valueSlice...)
+	// Handle likeor (both "likeor" and "like_or" for struct compatibility)
+	for _, key := range []string{"likeor", "like_or"} {
+		if likeOr, ok := data[key]; ok {
+			if likeOrMap, ok := likeOr.(map[string]any); ok {
+				for field, values := range likeOrMap {
+					if valueSlice := toStringSlice(values); len(valueSlice) > 0 {
+						b.LikeOr(field, valueSlice...)
+					}
 				}
-			}
-		} else if likeOrMapStr, ok := likeOr.(map[string][]string); ok {
-			// Handle direct map[string][]string from struct conversion
-			for field, values := range likeOrMapStr {
-				if len(values) > 0 {
-					b.LikeOr(field, values...)
-				}
-			}
-		}
-	}
-
-	// Handle likeand
-	if likeAnd, ok := data["likeand"]; ok {
-		if likeAndMap, ok := likeAnd.(map[string]any); ok {
-			for field, values := range likeAndMap {
-				if valueSlice := toStringSlice(values); len(valueSlice) > 0 {
-					b.LikeAnd(field, valueSlice...)
-				}
-			}
-		} else if likeAndMapStr, ok := likeAnd.(map[string][]string); ok {
-			// Handle direct map[string][]string from struct conversion
-			for field, values := range likeAndMapStr {
-				if len(values) > 0 {
-					b.LikeAnd(field, values...)
-				}
-			}
-		}
-	}
-
-	// Handle eqor
-	if eqOr, ok := data["eqor"]; ok {
-		if eqOrMap, ok := eqOr.(map[string]any); ok {
-			for field, values := range eqOrMap {
-				if valueSlice := toInterfaceSlice(values); len(valueSlice) > 0 {
-					b.EqOr(field, valueSlice...)
-				}
-			}
-		} else if eqOrMapSlice, ok := eqOr.(map[string][]any); ok {
-			// Handle direct map[string][]any from struct conversion
-			for field, values := range eqOrMapSlice {
-				if len(values) > 0 {
-					b.EqOr(field, values...)
-				}
-			}
-		}
-	}
-
-	// Handle eqand
-	if eqAnd, ok := data["eqand"]; ok {
-		if eqAndMap, ok := eqAnd.(map[string]any); ok {
-			for field, values := range eqAndMap {
-				if valueSlice := toInterfaceSlice(values); len(valueSlice) > 0 {
-					for _, value := range valueSlice {
-						b.WhereEquals(field, value)
+			} else if likeOrMapStr, ok := likeOr.(map[string][]string); ok {
+				// Handle direct map[string][]string from struct conversion
+				for field, values := range likeOrMapStr {
+					if len(values) > 0 {
+						b.LikeOr(field, values...)
 					}
 				}
 			}
-		} else if eqAndMapSlice, ok := eqAnd.(map[string][]any); ok {
-			// Handle direct map[string][]any from struct conversion
-			for field, values := range eqAndMapSlice {
-				if len(values) > 0 {
-					for _, value := range values {
-						b.WhereEquals(field, value)
+			break // Only process the first match
+		}
+	}
+
+	// Handle likeand (both "likeand" and "like_and" for struct compatibility)
+	for _, key := range []string{"likeand", "like_and"} {
+		if likeAnd, ok := data[key]; ok {
+			if likeAndMap, ok := likeAnd.(map[string]any); ok {
+				for field, values := range likeAndMap {
+					if valueSlice := toStringSlice(values); len(valueSlice) > 0 {
+						b.LikeAnd(field, valueSlice...)
+					}
+				}
+			} else if likeAndMapStr, ok := likeAnd.(map[string][]string); ok {
+				// Handle direct map[string][]string from struct conversion
+				for field, values := range likeAndMapStr {
+					if len(values) > 0 {
+						b.LikeAnd(field, values...)
 					}
 				}
 			}
+			break // Only process the first match
+		}
+	}
+
+	// Handle eqor (both "eqor" and "eq_or" for struct compatibility)
+	for _, key := range []string{"eqor", "eq_or"} {
+		if eqOr, ok := data[key]; ok {
+			if eqOrMap, ok := eqOr.(map[string]any); ok {
+				for field, values := range eqOrMap {
+					if valueSlice := toInterfaceSlice(values); len(valueSlice) > 0 {
+						b.EqOr(field, valueSlice...)
+					}
+				}
+			} else if eqOrMapSlice, ok := eqOr.(map[string][]any); ok {
+				// Handle direct map[string][]any from struct conversion
+				for field, values := range eqOrMapSlice {
+					if len(values) > 0 {
+						b.EqOr(field, values...)
+					}
+				}
+			}
+			break // Only process the first match
+		}
+	}
+
+	// Handle eqand (both "eqand" and "eq_and" for struct compatibility)
+	for _, key := range []string{"eqand", "eq_and"} {
+		if eqAnd, ok := data[key]; ok {
+			if eqAndMap, ok := eqAnd.(map[string]any); ok {
+				for field, values := range eqAndMap {
+					if valueSlice := toInterfaceSlice(values); len(valueSlice) > 0 {
+						b.EqAnd(field, valueSlice...)
+					}
+				}
+			} else if eqAndMapSlice, ok := eqAnd.(map[string][]any); ok {
+				// Handle direct map[string][]any from struct conversion
+				for field, values := range eqAndMapSlice {
+					if len(values) > 0 {
+						b.EqAnd(field, values...)
+					}
+				}
+			}
+			break // Only process the first match
 		}
 	}
 
 	// Handle comparison operators
-	if gte, ok := data["gte"]; ok {
-		if gteMap, ok := gte.(map[string]any); ok {
-			for field, value := range gteMap {
-				b.WhereGreaterThanOrEqual(field, value)
+	// Handle gte (both "gte" and "gte_" for struct compatibility)
+	for _, key := range []string{"gte", "gte_"} {
+		if gte, ok := data[key]; ok {
+			if gteMap, ok := gte.(map[string]any); ok {
+				for field, value := range gteMap {
+					b.WhereGreaterThanOrEqual(field, value)
+				}
 			}
+			break // Only process the first match
 		}
 	}
 
-	if gt, ok := data["gt"]; ok {
-		if gtMap, ok := gt.(map[string]any); ok {
-			for field, value := range gtMap {
-				b.WhereGreaterThan(field, value)
+	// Handle gt (both "gt" and "gt_" for struct compatibility)
+	for _, key := range []string{"gt", "gt_"} {
+		if gt, ok := data[key]; ok {
+			if gtMap, ok := gt.(map[string]any); ok {
+				for field, value := range gtMap {
+					b.WhereGreaterThan(field, value)
+				}
 			}
+			break // Only process the first match
 		}
 	}
 
-	if lte, ok := data["lte"]; ok {
-		if lteMap, ok := lte.(map[string]any); ok {
-			for field, value := range lteMap {
-				b.WhereLessThanOrEqual(field, value)
+	// Handle lte (both "lte" and "lte_" for struct compatibility)
+	for _, key := range []string{"lte", "lte_"} {
+		if lte, ok := data[key]; ok {
+			if lteMap, ok := lte.(map[string]any); ok {
+				for field, value := range lteMap {
+					b.WhereLessThanOrEqual(field, value)
+				}
 			}
+			break // Only process the first match
 		}
 	}
 
-	if lt, ok := data["lt"]; ok {
-		if ltMap, ok := lt.(map[string]any); ok {
-			for field, value := range ltMap {
-				b.WhereLessThan(field, value)
+	// Handle lt (both "lt" and "lt_" for struct compatibility)
+	for _, key := range []string{"lt", "lt_"} {
+		if lt, ok := data[key]; ok {
+			if ltMap, ok := lt.(map[string]any); ok {
+				for field, value := range ltMap {
+					b.WhereLessThan(field, value)
+				}
 			}
+			break // Only process the first match
 		}
 	}
 
