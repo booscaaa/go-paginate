@@ -125,14 +125,14 @@ func fromJSONExample() {
 	jsonQuery := `{
 		"page": 1,
 		"limit": 10,
-		"equals_or": {
+		"eqor": {
 			"status": ["active", "pending"]
 		},
-		"search_or": {
+		"likeor": {
 			"name": ["John", "Jane"],
 			"email": ["@company.com", "@gmail.com"]
 		},
-		"equals_and": {
+		"eqand": {
 			"email": ["@company.com", "@gmail.com"]
 		},
 		"gte": {

@@ -28,14 +28,14 @@ type QueryParams struct {
 	MapArgs        map[string]any
 	NoOffset       bool
 	// New filter fields
-	SearchOr  map[string][]string
-	SearchAnd map[string][]string
-	EqualsOr  map[string][]any
-	EqualsAnd map[string][]any
-	Gte       map[string]any
-	Gt        map[string]any
-	Lte       map[string]any
-	Lt        map[string]any
+	LikeOr  map[string][]string
+	LikeAnd map[string][]string
+	EqOr    map[string][]any
+	EqAnd   map[string][]any
+	Gte     map[string]any
+	Gt      map[string]any
+	Lte     map[string]any
+	Lt      map[string]any
 }
 
 // Option is a function that configures options in QueryParams.
@@ -148,32 +148,52 @@ func WithWhereClause(clause string, args ...any) Option {
 	}
 }
 
-// WithSearchOr sets the SearchOr filter.
+// WithLikeOr sets the LikeOr filter.
+func WithLikeOr(likeOr map[string][]string) Option {
+	return func(params *QueryParams) {
+		params.LikeOr = likeOr
+	}
+}
+
+// WithLikeAnd sets the LikeAnd filter.
+func WithLikeAnd(likeAnd map[string][]string) Option {
+	return func(params *QueryParams) {
+		params.LikeAnd = likeAnd
+	}
+}
+
+// WithEqOr sets the EqOr filter.
+func WithEqOr(eqOr map[string][]any) Option {
+	return func(params *QueryParams) {
+		params.EqOr = eqOr
+	}
+}
+
+// WithEqAnd sets the EqAnd filter.
+func WithEqAnd(eqAnd map[string][]any) Option {
+	return func(params *QueryParams) {
+		params.EqAnd = eqAnd
+	}
+}
+
+// WithSearchOr is deprecated, use WithLikeOr instead.
 func WithSearchOr(searchOr map[string][]string) Option {
-	return func(params *QueryParams) {
-		params.SearchOr = searchOr
-	}
+	return WithLikeOr(searchOr)
 }
 
-// WithSearchAnd sets the SearchAnd filter.
+// WithSearchAnd is deprecated, use WithLikeAnd instead.
 func WithSearchAnd(searchAnd map[string][]string) Option {
-	return func(params *QueryParams) {
-		params.SearchAnd = searchAnd
-	}
+	return WithLikeAnd(searchAnd)
 }
 
-// WithEqualsOr sets the EqualsOr filter.
+// WithEqualsOr is deprecated, use WithEqOr instead.
 func WithEqualsOr(equalsOr map[string][]any) Option {
-	return func(params *QueryParams) {
-		params.EqualsOr = equalsOr
-	}
+	return WithEqOr(equalsOr)
 }
 
-// WithEqualsAnd sets the EqualsAnd filter.
+// WithEqualsAnd is deprecated, use WithEqAnd instead.
 func WithEqualsAnd(equalsAnd map[string][]any) Option {
-	return func(params *QueryParams) {
-		params.EqualsAnd = equalsAnd
-	}
+	return WithEqAnd(equalsAnd)
 }
 
 // WithGte sets the Gte (greater than or equal) filter.
@@ -353,9 +373,9 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 		}
 	}
 
-	// SearchOr conditions
-	if len(params.SearchOr) > 0 {
-		for field, values := range params.SearchOr {
+	// LikeOr conditions
+	if len(params.LikeOr) > 0 {
+		for field, values := range params.LikeOr {
 			columnName := getFieldName(field, "json", "paginate", params.Struct)
 			if columnName != "" && len(values) > 0 {
 				var searchConditions []string
@@ -368,9 +388,9 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 		}
 	}
 
-	// SearchAnd conditions
-	if len(params.SearchAnd) > 0 {
-		for field, values := range params.SearchAnd {
+	// LikeAnd conditions
+	if len(params.LikeAnd) > 0 {
+		for field, values := range params.LikeAnd {
 			columnName := getFieldName(field, "json", "paginate", params.Struct)
 			if columnName != "" && len(values) > 0 {
 				var searchConditions []string
@@ -383,9 +403,9 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 		}
 	}
 
-	// EqualsOr conditions
-	if len(params.EqualsOr) > 0 {
-		for field, values := range params.EqualsOr {
+	// EqOr conditions
+	if len(params.EqOr) > 0 {
+		for field, values := range params.EqOr {
 			columnName := getFieldName(field, "json", "paginate", params.Struct)
 			if columnName != "" && len(values) > 0 {
 				var equalsConditions []string
@@ -398,9 +418,9 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 		}
 	}
 
-	// EqualsAnd conditions
-	if len(params.EqualsAnd) > 0 {
-		for field, values := range params.EqualsAnd {
+	// EqAnd conditions
+	if len(params.EqAnd) > 0 {
+		for field, values := range params.EqAnd {
 			columnName := getFieldName(field, "json", "paginate", params.Struct)
 			if columnName != "" && len(values) > 0 {
 				var equalsConditions []string

@@ -61,10 +61,10 @@ type TestPaginationParams struct {
 	Limit        int                 `json:"limit"`
 	Search       string              `json:"search"`
 	SearchFields []string            `json:"search_fields"`
-	SearchOr     map[string][]string `json:"search_or"`
-	SearchAnd    map[string][]string `json:"search_and"`
-	EqualsOr     map[string][]any    `json:"equals_or"`
-	EqualsAnd    map[string][]any    `json:"equals_and"`
+	LikeOr       map[string][]string `json:"likeor"`
+	LikeAnd      map[string][]string `json:"likeand"`
+	EqOr         map[string][]any    `json:"eqor"`
+	EqAnd        map[string][]any    `json:"eqand"`
 	Gte          map[string]any      `json:"gte"`
 	Gt           map[string]any      `json:"gt"`
 	Lte          map[string]any      `json:"lte"`
@@ -79,7 +79,7 @@ func TestFromStruct(t *testing.T) {
 		Limit:        25,
 		Search:       "john",
 		SearchFields: []string{"name", "email"},
-		SearchOr: map[string][]string{
+		LikeOr: map[string][]string{
 			"status": {"active", "pending"},
 		},
 		Gte: map[string]any{
@@ -114,8 +114,8 @@ func TestFromStruct(t *testing.T) {
 		t.Errorf("Expected 2 search fields, got %d", len(builder.params.SearchFields))
 	}
 
-	if len(builder.params.SearchOr["status"]) != 2 {
-		t.Errorf("Expected 2 search_or values for status, got %d", len(builder.params.SearchOr["status"]))
+	if len(builder.params.LikeOr["status"]) != 2 {
+		t.Errorf("Expected 2 likeor values for status, got %d", len(builder.params.LikeOr["status"]))
 	}
 
 	if builder.params.Gte["age"] != 18 {
@@ -358,7 +358,7 @@ func TestBuilderFromJSON(t *testing.T) {
 		"limit": 15,
 		"search": "john",
 		"search_fields": ["name", "email"],
-		"equals_or": {
+		"eqor": {
 			"status": ["active", "pending"]
 		},
 		"gte": {
@@ -397,7 +397,7 @@ func TestBuilderFromMap(t *testing.T) {
 		"limit":         25,
 		"search":        "test",
 		"search_fields": []string{"name", "description"},
-		"equals_or": map[string]any{
+		"eqor": map[string]any{
 			"category": []string{"tech", "business"},
 		},
 		"gt": map[string]any{

@@ -62,14 +62,14 @@ func TestBindQueryParamsToStruct(t *testing.T) {
 }
 
 func TestBindQueryParamsWithNestedParameters(t *testing.T) {
-	// Test nested parameters like search_or[field], equals_or[field], etc.
+	// Test nested parameters like likeor[field], eqor[field], etc.
 	queryParams := url.Values{
 		"page":              {"1"},
 		"limit":             {"10"},
-		"search_or[status]": {"active", "pending"},
-		"search_and[name]":  {"john"},
-		"equals_or[age]":    {"25", "30"},
-		"equals_and[role]":  {"admin"},
+		"likeor[status]": {"active", "pending"},
+		"likeand[name]":  {"john"},
+		"eqor[age]":    {"25", "30"},
+		"eqand[role]":  {"admin"},
 		"gte[created_at]":   {"2023-01-01"},
 		"gt[score]":         {"80"},
 		"lte[updated_at]":   {"2023-12-31"},
@@ -81,27 +81,25 @@ func TestBindQueryParamsWithNestedParameters(t *testing.T) {
 		t.Fatalf("Erro inesperado: %v", err)
 	}
 
-	// Verificar parâmetros search_or
-	if len(params.SearchOr["status"]) != 2 {
-		t.Errorf("Esperado 2 valores search_or para status, obtido %d", len(params.SearchOr["status"]))
+	// Verificar parâmetros likeor
+	if len(params.LikeOr["status"]) != 2 {
+		t.Errorf("Esperado 2 valores likeor para status, obtido %d", len(params.LikeOr["status"]))
+	}
+	if params.LikeOr["status"][0] != "active" || params.LikeOr["status"][1] != "pending" {
+		t.Errorf("Esperado likeor status ['active', 'pending'], obtido %v", params.LikeOr["status"])
 	}
 
-	if params.SearchOr["status"][0] != "active" || params.SearchOr["status"][1] != "pending" {
-		t.Errorf("Esperado search_or status ['active', 'pending'], obtido %v", params.SearchOr["status"])
+	// Verificar parâmetros likeand
+	if len(params.LikeAnd["name"]) != 1 {
+		t.Errorf("Esperado 1 valor likeand para name, obtido %d", len(params.LikeAnd["name"]))
+	}
+	if params.LikeAnd["name"][0] != "john" {
+		t.Errorf("Esperado likeand name 'john', obtido '%s'", params.LikeAnd["name"][0])
 	}
 
-	// Verificar parâmetros search_and
-	if len(params.SearchAnd["name"]) != 1 {
-		t.Errorf("Esperado 1 valor search_and para name, obtido %d", len(params.SearchAnd["name"]))
-	}
-
-	if params.SearchAnd["name"][0] != "john" {
-		t.Errorf("Esperado search_and name 'john', obtido '%s'", params.SearchAnd["name"][0])
-	}
-
-	// Verificar parâmetros equals_or
-	if len(params.EqualsOr["age"]) != 2 {
-		t.Errorf("Esperado 2 valores equals_or para age, obtido %d", len(params.EqualsOr["age"]))
+	// Verificar parâmetros eqor
+	if len(params.EqOr["age"]) != 2 {
+		t.Errorf("Esperado 2 valores eqor para age, obtido %d", len(params.EqOr["age"]))
 	}
 
 	// Verificar operadores de comparação
@@ -124,7 +122,7 @@ func TestBindQueryParamsWithNestedParameters(t *testing.T) {
 
 func TestBindQueryStringToStruct(t *testing.T) {
 	// Test parsing from raw query string
-	queryString := "page=3&limit=50&search=test&search_fields=name,email&search_or[status]=active&search_or[status]=pending&gte[age]=18"
+	queryString := "page=3&limit=50&search=test&search_fields=name,email&likeor[status]=active&likeor[status]=pending&gte[age]=18"
 
 	params, err := BindQueryStringToStruct(queryString)
 	if err != nil {
@@ -144,8 +142,8 @@ func TestBindQueryStringToStruct(t *testing.T) {
 		t.Errorf("Esperado search = 'test', obtido '%s'", params.Search)
 	}
 
-	if len(params.SearchOr["status"]) != 2 {
-		t.Errorf("Esperado 2 valores search_or para status, obtido %d", len(params.SearchOr["status"]))
+	if len(params.LikeOr["status"]) != 2 {
+		t.Errorf("Esperado 2 valores likeor para status, obtido %d", len(params.LikeOr["status"]))
 	}
 
 	if params.Gte["age"] != 18 {

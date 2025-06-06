@@ -21,10 +21,10 @@ type PaginationParams struct {
 	Columns        []string            `query:"columns"`
 	Vacuum         bool                `query:"vacuum"`
 	NoOffset       bool                `query:"no_offset"`
-	SearchOr       map[string][]string `query:"search_or"`
-	SearchAnd      map[string][]string `query:"search_and"`
-	EqualsOr       map[string][]any    `query:"equals_or"`
-	EqualsAnd      map[string][]any    `query:"equals_and"`
+	LikeOr         map[string][]string `query:"likeor"`
+	LikeAnd        map[string][]string `query:"likeand"`
+	EqOr           map[string][]any    `query:"eqor"`
+	EqAnd          map[string][]any    `query:"eqand"`
 	Gte            map[string]any      `query:"gte"`
 	Gt             map[string]any      `query:"gt"`
 	Lte            map[string]any      `query:"lte"`

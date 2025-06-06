@@ -29,7 +29,7 @@ func main() {
 
 	// Exemplo 2: Usando parâmetros complexos com arrays
 	fmt.Println("\n2. Bind de parâmetros complexos:")
-	queryString2 := "page=1&search_or[status]=active&search_or[status]=pending&equals_or[age]=25&equals_or[age]=30&gte[created_at]=2023-01-01&gt[score]=80"
+	queryString2 := "page=1&likeor[status]=active&likeor[status]=pending&eqor[age]=25&eqor[age]=30&gte[created_at]=2023-01-01&gt[score]=80"
 	params2, err := paginate.BindQueryStringToStruct(queryString2)
 	if err != nil {
 		log.Fatalf("Erro ao fazer bind: %v", err)
@@ -37,8 +37,8 @@ func main() {
 
 	fmt.Printf("Query String: %s\n", queryString2)
 	fmt.Printf("Resultado:\n")
-	fmt.Printf("  SearchOr: %v\n", params2.SearchOr)
-	fmt.Printf("  EqualsOr: %v\n", params2.EqualsOr)
+	fmt.Printf("  LikeOr: %v\n", params2.LikeOr)
+	fmt.Printf("  EqOr: %v\n", params2.EqOr)
 	fmt.Printf("  Gte: %v\n", params2.Gte)
 	fmt.Printf("  Gt: %v\n", params2.Gt)
 
@@ -49,7 +49,7 @@ func main() {
 		"limit":            {"50"},
 		"sort_columns":     {"name,created_at"},
 		"sort_directions":  {"ASC,DESC"},
-		"search_and[name]": {"admin"},
+		"likeand[name]": {"admin"},
 		"lte[updated_at]":  {"2023-12-31"},
 	}
 
@@ -64,7 +64,7 @@ func main() {
 	fmt.Printf("  Limit: %d\n", params3.Limit)
 	fmt.Printf("  SortColumns: %v\n", params3.SortColumns)
 	fmt.Printf("  SortDirections: %v\n", params3.SortDirections)
-	fmt.Printf("  SearchAnd: %v\n", params3.SearchAnd)
+	fmt.Printf("  LikeAnd: %v\n", params3.LikeAnd)
 	fmt.Printf("  Lte: %v\n", params3.Lte)
 
 	// Exemplo 4: Bind para struct customizada
@@ -107,7 +107,7 @@ func main() {
 // simulateHTTPHandler simula como usar o bind em um handler HTTP real
 func simulateHTTPHandler() {
 	// Simular uma URL de request HTTP com novo padrão de sort
-	requestURL := "https://api.example.com/users?page=2&limit=20&search=john&search_fields=name,email&search_or[status]=active&search_or[status]=pending&gte[age]=18&sort=name&sort=-created_at"
+	requestURL := "https://api.example.com/users?page=2&limit=20&search=john&search_fields=name,email&likeor[status]=active&likeor[status]=pending&gte[age]=18&sort=name&sort=-created_at"
 
 	// Parse da URL
 	parsedURL, err := url.Parse(requestURL)
@@ -130,7 +130,7 @@ func simulateHTTPHandler() {
 	fmt.Printf("  Limit: %d\n", paginationParams.Limit)
 	fmt.Printf("  Search: %s\n", paginationParams.Search)
 	fmt.Printf("  SearchFields: %v\n", paginationParams.SearchFields)
-	fmt.Printf("  SearchOr: %v\n", paginationParams.SearchOr)
+	fmt.Printf("  LikeOr: %v\n", paginationParams.LikeOr)
 	fmt.Printf("  Sort: %v\n", paginationParams.Sort)
 	fmt.Printf("  SortColumns: %v\n", paginationParams.SortColumns)
 	fmt.Printf("  SortDirections: %v\n", paginationParams.SortDirections)

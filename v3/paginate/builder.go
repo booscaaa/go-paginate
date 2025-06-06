@@ -23,10 +23,10 @@ func NewBuilder() *PaginatorBuilder {
 			ItemsPerPage:   10,
 			WhereCombining: "AND",
 			NoOffset:       false,
-			SearchOr:       make(map[string][]string),
-			SearchAnd:      make(map[string][]string),
-			EqualsOr:       make(map[string][]any),
-			EqualsAnd:      make(map[string][]any),
+			LikeOr:        make(map[string][]string),
+		LikeAnd:       make(map[string][]string),
+		EqOr:          make(map[string][]any),
+		EqAnd:         make(map[string][]any),
 			Gte:            make(map[string]any),
 			Gt:             make(map[string]any),
 			Lte:            make(map[string]any),
@@ -107,28 +107,38 @@ func (b *PaginatorBuilder) Search(term string, fields ...string) *PaginatorBuild
 	return b
 }
 
-// SearchOr adds OR search conditions for specific fields
-func (b *PaginatorBuilder) SearchOr(field string, values ...string) *PaginatorBuilder {
+// LikeOr adds OR search conditions for specific fields
+func (b *PaginatorBuilder) LikeOr(field string, values ...string) *PaginatorBuilder {
 	if b.err != nil {
 		return b
 	}
-	if b.params.SearchOr == nil {
-		b.params.SearchOr = make(map[string][]string)
+	if b.params.LikeOr == nil {
+		b.params.LikeOr = make(map[string][]string)
 	}
-	b.params.SearchOr[field] = append(b.params.SearchOr[field], values...)
+	b.params.LikeOr[field] = append(b.params.LikeOr[field], values...)
 	return b
 }
 
-// SearchAnd adds AND search conditions for specific fields
-func (b *PaginatorBuilder) SearchAnd(field string, values ...string) *PaginatorBuilder {
+// SearchOr is deprecated, use LikeOr instead
+func (b *PaginatorBuilder) SearchOr(field string, values ...string) *PaginatorBuilder {
+	return b.LikeOr(field, values...)
+}
+
+// LikeAnd adds AND search conditions for specific fields
+func (b *PaginatorBuilder) LikeAnd(field string, values ...string) *PaginatorBuilder {
 	if b.err != nil {
 		return b
 	}
-	if b.params.SearchAnd == nil {
-		b.params.SearchAnd = make(map[string][]string)
+	if b.params.LikeAnd == nil {
+		b.params.LikeAnd = make(map[string][]string)
 	}
-	b.params.SearchAnd[field] = append(b.params.SearchAnd[field], values...)
+	b.params.LikeAnd[field] = append(b.params.LikeAnd[field], values...)
 	return b
+}
+
+// SearchAnd is deprecated, use LikeAnd instead
+func (b *PaginatorBuilder) SearchAnd(field string, values ...string) *PaginatorBuilder {
+	return b.LikeAnd(field, values...)
 }
 
 // Where adds a custom WHERE clause
@@ -146,28 +156,33 @@ func (b *PaginatorBuilder) WhereEquals(field string, value any) *PaginatorBuilde
 	if b.err != nil {
 		return b
 	}
-	if b.params.EqualsAnd == nil {
-		b.params.EqualsAnd = make(map[string][]any)
+	if b.params.EqAnd == nil {
+		b.params.EqAnd = make(map[string][]any)
 	}
-	b.params.EqualsAnd[field] = append(b.params.EqualsAnd[field], value)
+	b.params.EqAnd[field] = append(b.params.EqAnd[field], value)
 	return b
 }
 
-// WhereEqualsOr adds OR equality conditions
-func (b *PaginatorBuilder) WhereEqualsOr(field string, values ...any) *PaginatorBuilder {
+// EqOr adds OR equality conditions
+func (b *PaginatorBuilder) EqOr(field string, values ...any) *PaginatorBuilder {
 	if b.err != nil {
 		return b
 	}
-	if b.params.EqualsOr == nil {
-		b.params.EqualsOr = make(map[string][]any)
+	if b.params.EqOr == nil {
+		b.params.EqOr = make(map[string][]any)
 	}
-	b.params.EqualsOr[field] = append(b.params.EqualsOr[field], values...)
+	b.params.EqOr[field] = append(b.params.EqOr[field], values...)
 	return b
 }
 
-// WhereIn adds IN conditions (alias for WhereEqualsOr)
+// WhereEqualsOr is deprecated, use EqOr instead
+func (b *PaginatorBuilder) WhereEqualsOr(field string, values ...any) *PaginatorBuilder {
+	return b.EqOr(field, values...)
+}
+
+// WhereIn adds IN conditions (alias for EqOr)
 func (b *PaginatorBuilder) WhereIn(field string, values ...any) *PaginatorBuilder {
-	return b.WhereEqualsOr(field, values...)
+	return b.EqOr(field, values...)
 }
 
 // WhereGreaterThan adds greater than conditions
@@ -355,73 +370,73 @@ func (b *PaginatorBuilder) fromMap(data map[string]any) *PaginatorBuilder {
 		}
 	}
 
-	// Handle search_or
-	if searchOr, ok := data["search_or"]; ok {
-		if searchOrMap, ok := searchOr.(map[string]any); ok {
-			for field, values := range searchOrMap {
+	// Handle likeor
+	if likeOr, ok := data["likeor"]; ok {
+		if likeOrMap, ok := likeOr.(map[string]any); ok {
+			for field, values := range likeOrMap {
 				if valueSlice := toStringSlice(values); len(valueSlice) > 0 {
-					b.SearchOr(field, valueSlice...)
+					b.LikeOr(field, valueSlice...)
 				}
 			}
-		} else if searchOrMapStr, ok := searchOr.(map[string][]string); ok {
+		} else if likeOrMapStr, ok := likeOr.(map[string][]string); ok {
 			// Handle direct map[string][]string from struct conversion
-			for field, values := range searchOrMapStr {
+			for field, values := range likeOrMapStr {
 				if len(values) > 0 {
-					b.SearchOr(field, values...)
+					b.LikeOr(field, values...)
 				}
 			}
 		}
 	}
 
-	// Handle search_and
-	if searchAnd, ok := data["search_and"]; ok {
-		if searchAndMap, ok := searchAnd.(map[string]any); ok {
-			for field, values := range searchAndMap {
+	// Handle likeand
+	if likeAnd, ok := data["likeand"]; ok {
+		if likeAndMap, ok := likeAnd.(map[string]any); ok {
+			for field, values := range likeAndMap {
 				if valueSlice := toStringSlice(values); len(valueSlice) > 0 {
-					b.SearchAnd(field, valueSlice...)
+					b.LikeAnd(field, valueSlice...)
 				}
 			}
-		} else if searchAndMapStr, ok := searchAnd.(map[string][]string); ok {
+		} else if likeAndMapStr, ok := likeAnd.(map[string][]string); ok {
 			// Handle direct map[string][]string from struct conversion
-			for field, values := range searchAndMapStr {
+			for field, values := range likeAndMapStr {
 				if len(values) > 0 {
-					b.SearchAnd(field, values...)
+					b.LikeAnd(field, values...)
 				}
 			}
 		}
 	}
 
-	// Handle equals_or
-	if equalsOr, ok := data["equals_or"]; ok {
-		if equalsOrMap, ok := equalsOr.(map[string]any); ok {
-			for field, values := range equalsOrMap {
+	// Handle eqor
+	if eqOr, ok := data["eqor"]; ok {
+		if eqOrMap, ok := eqOr.(map[string]any); ok {
+			for field, values := range eqOrMap {
 				if valueSlice := toInterfaceSlice(values); len(valueSlice) > 0 {
-					b.WhereEqualsOr(field, valueSlice...)
+					b.EqOr(field, valueSlice...)
 				}
 			}
-		} else if equalsOrMapSlice, ok := equalsOr.(map[string][]any); ok {
+		} else if eqOrMapSlice, ok := eqOr.(map[string][]any); ok {
 			// Handle direct map[string][]any from struct conversion
-			for field, values := range equalsOrMapSlice {
+			for field, values := range eqOrMapSlice {
 				if len(values) > 0 {
-					b.WhereEqualsOr(field, values...)
+					b.EqOr(field, values...)
 				}
 			}
 		}
 	}
 
-	// Handle equals_and
-	if equalsAnd, ok := data["equals_and"]; ok {
-		if equalsAndMap, ok := equalsAnd.(map[string]any); ok {
-			for field, values := range equalsAndMap {
+	// Handle eqand
+	if eqAnd, ok := data["eqand"]; ok {
+		if eqAndMap, ok := eqAnd.(map[string]any); ok {
+			for field, values := range eqAndMap {
 				if valueSlice := toInterfaceSlice(values); len(valueSlice) > 0 {
 					for _, value := range valueSlice {
 						b.WhereEquals(field, value)
 					}
 				}
 			}
-		} else if equalsAndMapSlice, ok := equalsAnd.(map[string][]any); ok {
+		} else if eqAndMapSlice, ok := eqAnd.(map[string][]any); ok {
 			// Handle direct map[string][]any from struct conversion
-			for field, values := range equalsAndMapSlice {
+			for field, values := range eqAndMapSlice {
 				if len(values) > 0 {
 					for _, value := range values {
 						b.WhereEquals(field, value)

@@ -52,10 +52,10 @@ func TestBindQueryParamsInvalidTypes(t *testing.T) {
 func TestBindQueryParamsMapFields(t *testing.T) {
 	// Test map field binding with array syntax
 	queryParams := url.Values{
-		"search_or[name]": {"john"},
-		"search_or[email]": {"test@example.com"},
-		"equals_and[status]": {"active"},
-		"equals_and[type]": {"user"},
+		"likeor[name]": {"john"},
+		"likeor[email]": {"test@example.com"},
+		"eqand[status]": {"active"},
+		"eqand[type]": {"user"},
 	}
 
 	params := &PaginationParams{}
@@ -64,16 +64,16 @@ func TestBindQueryParamsMapFields(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	if len(params.SearchOr) != 2 {
-		t.Errorf("Expected 2 search_or entries, got %d", len(params.SearchOr))
+	if len(params.LikeOr) != 2 {
+		t.Errorf("Expected 2 likeor entries, got %d", len(params.LikeOr))
 	}
 
-	if len(params.SearchOr["name"]) == 0 || params.SearchOr["name"][0] != "john" {
-		t.Errorf("Expected search_or[name] = ['john'], got %v", params.SearchOr["name"])
+	if len(params.LikeOr["name"]) == 0 || params.LikeOr["name"][0] != "john" {
+		t.Errorf("Expected likeor[name] = ['john'], got %v", params.LikeOr["name"])
 	}
 
-	if len(params.EqualsAnd) != 2 {
-		t.Errorf("Expected 2 equals_and entries, got %d", len(params.EqualsAnd))
+	if len(params.EqAnd) != 2 {
+		t.Errorf("Expected 2 eqand entries, got %d", len(params.EqAnd))
 	}
 }
 
