@@ -129,8 +129,8 @@ func main() {
 	finalSQL, finalArgs, err := paginate.NewBuilder().
 		Table("products").
 		Model(struct {
-			ID    int    `json:"id" paginate:"id"`
-			Name  string `json:"name" paginate:"name"`
+			ID    int     `json:"id" paginate:"id"`
+			Name  string  `json:"name" paginate:"name"`
 			Price float64 `json:"price" paginate:"price"`
 		}{}).
 		Page(1).
