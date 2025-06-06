@@ -139,7 +139,7 @@ func complexFluentExample() {
         OrderBy("dept_name").
         OrderByDesc("salary").
         OrderBy("name").
-        Vacuum().
+        WithVacuum().
         BuildSQL()
 
     if err != nil {
