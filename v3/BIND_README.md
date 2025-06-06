@@ -2,19 +2,19 @@
 
 This functionality allows binding URL query parameters to pagination structs in a simple and efficient way.
 
-## Funcionalidades
+## Features
 
-- ✅ Bind de parâmetros básicos (page, limit, search, etc.)
-- ✅ Suporte a arrays e slices
-- ✅ Parâmetros complexos com sintaxe de array (`likeor[field]`, `eqor[field]`, etc.)
-- ✅ Conversão automática de tipos (int, bool, string)
-- ✅ Suporte a structs customizadas
-- ✅ Validação de tipos
-- ✅ Valores padrão
+- ✅ Basic parameter binding (page, limit, search, etc.)
+- ✅ Array and slice support
+- ✅ Complex parameters with array syntax (`likeor[field]`, `eqor[field]`, etc.)
+- ✅ Automatic type conversion (int, bool, string)
+- ✅ Custom struct support
+- ✅ Type validation
+- ✅ Default values
 
-## Uso Básico
+## Basic Usage
 
-### 1. Bind para PaginationParams (struct padrão)
+### 1. Bind to PaginationParams (default struct)
 
 ```go
 package main
@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-    // A partir de uma query string
+    // From a query string
     queryString := "page=2&limit=25&search=john&search_fields=name,email"
     params, err := paginate.BindQueryStringToStruct(queryString)
     if err != nil {
@@ -40,7 +40,7 @@ func main() {
 }
 ```
 
-### 2. Bind usando url.Values
+### 2. Bind using url.Values
 
 ```go
 import (
@@ -65,51 +65,51 @@ func handler() {
 }
 ```
 
-## Parâmetros Suportados
+## Supported Parameters
 
-### Parâmetros Básicos
+### Basic Parameters
 
 | Parameter         | Type     | Description                 | Example                        |
 | ----------------- | -------- | --------------------------- | ------------------------------ |
-| `page`            | int      | Número da página            | `page=2`                       |
-| `limit`           | int      | Itens por página            | `limit=25`                     |
-| `items_per_page`  | int      | Alias para limit            | `items_per_page=25`            |
+| `page`            | int      | Page number                 | `page=2`                       |
+| `limit`           | int      | Items per page              | `limit=25`                     |
+| `items_per_page`  | int      | Alias for limit             | `items_per_page=25`            |
 | `search`          | string   | Search term                 | `search=john`                  |
 | `search_fields`   | []string | Fields for search           | `search_fields=name,email`     |
 | `sort_columns`    | []string | Columns for sorting         | `sort_columns=name,created_at` |
-| `sort_directions` | []string | Direções de ordenação       | `sort_directions=ASC,DESC`     |
-| `columns`         | []string | Colunas para seleção        | `columns=id,name,email`        |
-| `vacuum`          | bool     | Usar estimativa de contagem | `vacuum=true`                  |
-| `no_offset`       | bool     | Desabilitar OFFSET          | `no_offset=false`              |
+| `sort_directions` | []string | Sort directions             | `sort_directions=ASC,DESC`     |
+| `columns`         | []string | Columns for selection       | `columns=id,name,email`        |
+| `vacuum`          | bool     | Use count estimation        | `vacuum=true`                  |
+| `no_offset`       | bool     | Disable OFFSET              | `no_offset=false`              |
 
-### Parâmetros Complexos (Sintaxe de Array)
+### Complex Parameters (Array Syntax)
 
-| Parâmetro           | Tipo                | Descrição           | Exemplo                                              |
+| Parameter           | Type                | Description         | Example                                              |
 | ------------------- | ------------------- | ------------------- | ---------------------------------------------------- |
-| `likeor[field]`     | map[string][]string | Busca OR por campo  | `likeor[status]=active&likeor[status]=pending`       |
-| `likeand[field]`    | map[string][]string | Busca AND por campo | `likeand[name]=john`                                 |
-| `eqor[field]`       | map[string][]any    | Igualdade OR        | `eqor[age]=25&eqor[age]=30`                          |
-| `eqand[field]`      | map[string][]any    | Igualdade AND       | `eqand[role]=admin`                                  |
-| `gte[field]`        | map[string]any      | Maior ou igual      | `gte[age]=18`                                        |
-| `gt[field]`         | map[string]any      | Maior que           | `gt[score]=80`                                       |
-| `lte[field]`        | map[string]any      | Menor ou igual      | `lte[price]=100.50`                                  |
-| `lt[field]`         | map[string]any      | Menor que           | `lt[date]=2023-12-31`                                |
+| `likeor[field]`     | map[string][]string | OR search by field  | `likeor[status]=active&likeor[status]=pending`       |
+| `likeand[field]`    | map[string][]string | AND search by field | `likeand[name]=john`                                 |
+| `eqor[field]`       | map[string][]any    | OR equality         | `eqor[age]=25&eqor[age]=30`                          |
+| `eqand[field]`      | map[string][]any    | AND equality        | `eqand[role]=admin`                                  |
+| `gte[field]`        | map[string]any      | Greater or equal    | `gte[age]=18`                                        |
+| `gt[field]`         | map[string]any      | Greater than        | `gt[score]=80`                                       |
+| `lte[field]`        | map[string]any      | Less or equal       | `lte[price]=100.50`                                  |
+| `lt[field]`         | map[string]any      | Less than           | `lt[date]=2023-12-31`                                |
 
-## Exemplos Avançados
+## Advanced Examples
 
-### 1. Parâmetros Complexos
+### 1. Complex Parameters
 
 ```go
 queryString := "page=1&likeor[status]=active&likeor[status]=pending&eqor[age]=25&eqor[age]=30&gte[created_at]=2023-01-01"
 params, err := paginate.BindQueryStringToStruct(queryString)
 
-// Resultado:
+// Result:
 // params.LikeOr["status"] = ["active", "pending"]
 // params.EqOr["age"] = [25, 30]
 // params.Gte["created_at"] = "2023-01-01"
 ```
 
-### 2. Struct Customizada
+### 2. Custom Struct
 
 ```go
 type CustomParams struct {
@@ -132,11 +132,11 @@ customParams := &CustomParams{}
 err := paginate.BindQueryParams(queryParams, customParams)
 ```
 
-### 3. Uso em Handler HTTP
+### 3. Usage in HTTP Handler
 
 ```go
 func usersHandler(w http.ResponseWriter, r *http.Request) {
-    // Extrair query parameters da request
+    // Extract query parameters from request
     queryParams := r.URL.Query()
 
     // Bind to pagination struct
@@ -151,26 +151,26 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-## Conversão de Tipos
+## Type Conversion
 
-A biblioteca faz conversão automática de tipos:
+The library performs automatic type conversion:
 
-- **Strings**: Usadas diretamente
-- **Integers**: Convertidos com `strconv.Atoi()`
-- **Booleans**: Convertidos com `strconv.ParseBool()`
-- **Floats**: Convertidos com `strconv.ParseFloat()`
-- **Slices**: Múltiplos valores ou valores separados por vírgula
+- **Strings**: Used directly
+- **Integers**: Converted with `strconv.Atoi()`
+- **Booleans**: Converted with `strconv.ParseBool()`
+- **Floats**: Converted with `strconv.ParseFloat()`
+- **Slices**: Multiple values or comma-separated values
 
-## Tratamento de Erros
+## Error Handling
 
-- Valores inválidos são ignorados (mantém valor padrão)
-- Tipos incompatíveis são ignorados
-- Erros de parsing da query string são retornados
-- Targets inválidos (não-ponteiro ou não-struct) retornam erro
+- Invalid values are ignored (keeps default value)
+- Incompatible types are ignored
+- Query string parsing errors are returned
+- Invalid targets (non-pointer or non-struct) return error
 
-## Valores Padrão
+## Default Values
 
-A struct `PaginationParams` tem valores padrão:
+The `PaginationParams` struct has default values:
 
 ```go
 params := &PaginationParams{
@@ -180,15 +180,15 @@ params := &PaginationParams{
 }
 ```
 
-## Executar Exemplo
+## Run Example
 
-Para ver a funcionalidade em ação:
+To see the functionality in action:
 
 ```bash
 go run example_bind.go
 ```
 
-## Executar Testes
+## Run Tests
 
 ```bash
 go test -v ./paginate -run TestBind

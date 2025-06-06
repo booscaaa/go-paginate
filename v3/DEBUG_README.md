@@ -1,23 +1,23 @@
 # Go-Paginate v3 - Debug Mode
 
-Este documento descreve a funcionalidade de debug implementada no go-paginate v3, que permite logging estruturado de todas as queries SQL geradas.
+This document describes the debug functionality implemented in go-paginate v3, which allows structured logging of all generated SQL queries.
 
-## 🔧 Configuração
+## 🔧 Configuration
 
-### Variáveis de Ambiente
+### Environment Variables
 
 ```bash
-# Habilitar modo debug (imprime SQL gerado)
+# Enable debug mode (prints generated SQL)
 export GO_PAGINATE_DEBUG=true
 
 # Set default page limit
 export GO_PAGINATE_DEFAULT_LIMIT=25
 
-# Definir limite máximo de página
+# Set maximum page limit
 export GO_PAGINATE_MAX_LIMIT=1000
 ```
 
-### Configuração Global
+### Global Configuration
 
 ```go
 package main
@@ -32,11 +32,11 @@ func init() {
 }
 ```
 
-## 📊 Logs Estruturados
+## 📊 Structured Logs
 
-Quando o modo debug está habilitado (`GO_PAGINATE_DEBUG=true` ou `paginate.SetDebugMode(true)`), o go-paginate irá gerar logs estruturados em formato JSON para todas as queries SQL criadas.
+When debug mode is enabled (`GO_PAGINATE_DEBUG=true` or `paginate.SetDebugMode(true)`), go-paginate will generate structured logs in JSON format for all created SQL queries.
 
-### Formato dos Logs
+### Log Format
 
 ```json
 {
@@ -51,23 +51,23 @@ Quando o modo debug está habilitado (`GO_PAGINATE_DEBUG=true` ou `paginate.SetD
 }
 ```
 
-### Campos dos Logs
+### Log Fields
 
-- **time**: Timestamp do log
-- **level**: Nível do log (INFO para queries SQL)
-- **msg**: Mensagem descritiva
-- **component**: Componente que gerou o log (`go-paginate-sql`)
-- **operation**: Operação que gerou a query:
-  - `BuildSQL`: Query principal de paginação
-  - `BuildCountSQL`: Query de contagem
-  - `GenerateSQL`: Query gerada internamente
-  - `GenerateCountQuery`: Query de contagem gerada internamente
-  - `GenerateCountQuery (Vacuum)`: Query de contagem otimizada
-- **query**: A query SQL gerada
-- **args**: Array com os argumentos da query
-- **args_count**: Número total de argumentos
+- **time**: Log timestamp
+- **level**: Log level (INFO for SQL queries)
+- **msg**: Descriptive message
+- **component**: Component that generated the log (`go-paginate-sql`)
+- **operation**: Operation that generated the query:
+  - `BuildSQL`: Main pagination query
+  - `BuildCountSQL`: Count query
+  - `GenerateSQL`: Internally generated query
+  - `GenerateCountQuery`: Internally generated count query
+  - `GenerateCountQuery (Vacuum)`: Optimized count query
+- **query**: The generated SQL query
+- **args**: Array with query arguments
+- **args_count**: Total number of arguments
 
-## 🚀 Exemplo de Uso
+## 🚀 Usage Example
 
 ```go
 package main
@@ -85,16 +85,16 @@ type User struct {
 }
 
 func main() {
-    // Configurar logging estruturado
+    // Configure structured logging
     logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
         Level: slog.LevelDebug,
     }))
     slog.SetDefault(logger)
     
-    // Habilitar modo debug
+    // Enable debug mode
     paginate.SetDebugMode(true)
     
-    // Construir query
+    // Build query
     sql, args, err := paginate.NewBuilder().
         Table("users").
         Model(User{}).
@@ -115,10 +115,10 @@ func main() {
 }
 ```
 
-## 🔍 Operações que Geram Logs
+## 🔍 Operations that Generate Logs
 
 ### 1. BuildSQL()
-Gera logs para a query principal de paginação:
+Generates logs for the main pagination query:
 ```json
 {
   "operation": "BuildSQL",
@@ -128,7 +128,7 @@ Gera logs para a query principal de paginação:
 ```
 
 ### 2. BuildCountSQL()
-Gera logs para a query de contagem:
+Generates logs for the count query:
 ```json
 {
   "operation": "BuildCountSQL",
@@ -138,7 +138,7 @@ Gera logs para a query de contagem:
 ```
 
 ### 3. GenerateSQL() (interno)
-Chamado internamente pelo BuildSQL():
+Called internally by BuildSQL():
 ```json
 {
   "operation": "GenerateSQL",
@@ -148,7 +148,7 @@ Chamado internamente pelo BuildSQL():
 ```
 
 ### 4. GenerateCountQuery() (interno)
-Chamado internamente pelo BuildCountSQL():
+Called internally by BuildCountSQL():
 ```json
 {
   "operation": "GenerateCountQuery",
@@ -158,7 +158,7 @@ Chamado internamente pelo BuildCountSQL():
 ```
 
 ### 5. Vacuum Mode
-Quando o modo vacuum está habilitado:
+When vacuum mode is enabled:
 ```json
 {
   "operation": "GenerateCountQuery (Vacuum)",
@@ -167,12 +167,12 @@ Quando o modo vacuum está habilitado:
 }
 ```
 
-## ⚙️ Configuração Avançada
+## ⚙️ Advanced Configuration
 
-### Logger Customizado
+### Custom Logger
 
 ```go
-// Configurar logger customizado
+// Configure custom logger
 customLogger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
     Level: slog.LevelInfo,
     AddSource: true,
@@ -181,7 +181,7 @@ customLogger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 paginate.SetLogger(customLogger)
 ```
 
-### Verificar Status da Configuração
+### Check Configuration Status
 
 ```go
 // Check current configurations
@@ -190,15 +190,15 @@ fmt.Println("Default Limit:", paginate.GetDefaultLimit())
 fmt.Println("Max Limit:", paginate.GetMaxLimit())
 ```
 
-## 🛡️ Segurança
+## 🛡️ Security
 
-- Os logs incluem os argumentos da query, mas estes são parametrizados e seguros contra SQL injection
-- Em produção, considere desabilitar o modo debug ou configurar o nível de log apropriado
-- Os logs podem conter dados sensíveis nos argumentos - configure adequadamente em ambientes de produção
+- Logs include query arguments, but these are parameterized and safe against SQL injection
+- In production, consider disabling debug mode or configuring the appropriate log level
+- Logs may contain sensitive data in arguments - configure appropriately in production environments
 
-## 📝 Notas
+## 📝 Notes
 
-- O modo debug utiliza o nível `INFO` para garantir visibilidade dos logs
-- Cada operação pode gerar múltiplos logs (interno + público)
-- Os logs são thread-safe e utilizam o logger padrão do Go (`log/slog`)
-- A configuração é global e afeta todas as instâncias do paginate
+- Debug mode uses the `INFO` level to ensure log visibility
+- Each operation may generate multiple logs (internal + public)
+- Logs are thread-safe and use Go's standard logger (`log/slog`)
+- Configuration is global and affects all paginate instances
