@@ -1,6 +1,6 @@
 # Query Parameters Bind
 
-Esta funcionalidade permite fazer bind de query parameters de URLs para structs de paginação de forma simples e eficiente.
+This functionality allows binding URL query parameters to pagination structs in a simple and efficient way.
 
 ## Funcionalidades
 
@@ -69,14 +69,14 @@ func handler() {
 
 ### Parâmetros Básicos
 
-| Parâmetro         | Tipo     | Descrição                   | Exemplo                        |
+| Parameter         | Type     | Description                 | Example                        |
 | ----------------- | -------- | --------------------------- | ------------------------------ |
 | `page`            | int      | Número da página            | `page=2`                       |
 | `limit`           | int      | Itens por página            | `limit=25`                     |
 | `items_per_page`  | int      | Alias para limit            | `items_per_page=25`            |
-| `search`          | string   | Termo de busca              | `search=john`                  |
-| `search_fields`   | []string | Campos para busca           | `search_fields=name,email`     |
-| `sort_columns`    | []string | Colunas para ordenação      | `sort_columns=name,created_at` |
+| `search`          | string   | Search term                 | `search=john`                  |
+| `search_fields`   | []string | Fields for search           | `search_fields=name,email`     |
+| `sort_columns`    | []string | Columns for sorting         | `sort_columns=name,created_at` |
 | `sort_directions` | []string | Direções de ordenação       | `sort_directions=ASC,DESC`     |
 | `columns`         | []string | Colunas para seleção        | `columns=id,name,email`        |
 | `vacuum`          | bool     | Usar estimativa de contagem | `vacuum=true`                  |
@@ -139,14 +139,14 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
     // Extrair query parameters da request
     queryParams := r.URL.Query()
 
-    // Fazer bind para struct de paginação
+    // Bind to pagination struct
     paginationParams, err := paginate.BindQueryParamsToStruct(queryParams)
     if err != nil {
-        http.Error(w, "Parâmetros inválidos", http.StatusBadRequest)
+        http.Error(w, "Invalid parameters", http.StatusBadRequest)
         return
     }
 
-    // Usar os parâmetros para construir a query
+    // Use the parameters to build the query
     // ...
 }
 ```
@@ -174,9 +174,9 @@ A struct `PaginationParams` tem valores padrão:
 
 ```go
 params := &PaginationParams{
-    Page:         1,  // página padrão
-    Limit:        10, // limite padrão
-    ItemsPerPage: 10, // itens por página padrão
+    Page:         1,  // default page
+    Limit:        10, // default limit
+    ItemsPerPage: 10, // default items per page
 }
 ```
 

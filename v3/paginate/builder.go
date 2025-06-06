@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strconv"
 	"strings"
@@ -15,22 +16,14 @@ type PaginatorBuilder struct {
 	err    error
 }
 
-// NewBuilder creates a new PaginatorBuilder instance
+// NewBuilder creates a new PaginatorBuilder with default values from global config
 func NewBuilder() *PaginatorBuilder {
 	return &PaginatorBuilder{
 		params: &QueryParams{
 			Page:           1,
-			ItemsPerPage:   10,
+			ItemsPerPage:   GetDefaultLimit(), // Use global default
+			Vacuum:         false,
 			WhereCombining: "AND",
-			NoOffset:       false,
-			LikeOr:        make(map[string][]string),
-		LikeAnd:       make(map[string][]string),
-		EqOr:          make(map[string][]any),
-		EqAnd:         make(map[string][]any),
-			Gte:            make(map[string]any),
-			Gt:             make(map[string]any),
-			Lte:            make(map[string]any),
-			Lt:             make(map[string]any),
 		},
 	}
 }
@@ -75,16 +68,33 @@ func (b *PaginatorBuilder) Page(page int) *PaginatorBuilder {
 	return b
 }
 
-// Limit sets the number of items per page
+// Limit sets the number of items per page with global max limit validation
 func (b *PaginatorBuilder) Limit(limit int) *PaginatorBuilder {
+	logger := slog.With("component", "go-paginate-builder")
+
 	if b.err != nil {
 		return b
 	}
+
 	if limit < 1 {
 		b.err = errors.New("limit must be greater than 0")
+		logger.Error("Invalid limit value",
+			"attempted_value", limit,
+			"error", b.err)
 		return b
 	}
+
+	// Check against global max limit
+	maxLimit := GetMaxLimit()
+	if limit > maxLimit {
+		logger.Warn("Limit exceeds maximum allowed, using max limit",
+			"requested_limit", limit,
+			"max_limit", maxLimit)
+		limit = maxLimit
+	}
+
 	b.params.ItemsPerPage = limit
+	logger.Debug("Limit set", "limit", limit)
 	return b
 }
 
@@ -547,6 +557,10 @@ func (b *PaginatorBuilder) BuildSQL() (string, []any, error) {
 	}
 
 	sql, args := params.GenerateSQL()
+	
+	// Log SQL if debug mode is enabled
+	logSQL("BuildSQL", sql, args)
+	
 	return sql, args, nil
 }
 
@@ -558,6 +572,10 @@ func (b *PaginatorBuilder) BuildCountSQL() (string, []any, error) {
 	}
 
 	sql, args := params.GenerateCountQuery()
+	
+	// Log SQL if debug mode is enabled
+	logSQL("BuildCountSQL", sql, args)
+	
 	return sql, args, nil
 }
 

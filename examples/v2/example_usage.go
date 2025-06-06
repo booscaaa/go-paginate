@@ -16,7 +16,7 @@ type User struct {
 }
 
 func main() {
-	// Exemplo 1: LikeOr - busca por "vini" OU "joao" no campo nome
+	// Example 1: LikeOr - search for "vini" OR "joao" in the name field
 	p1, err := paginate.NewPaginator(
 		paginate.WithTable("users"),
 		paginate.WithStruct(User{}),
@@ -29,11 +29,11 @@ func main() {
 	}
 
 	query1, args1 := p1.GenerateSQL()
-	fmt.Println("Exemplo 1 - LikeOr:")
+	fmt.Println("Example 1 - LikeOr:")
 	fmt.Printf("Query: %s\n", query1)
 	fmt.Printf("Args: %v\n\n", args1)
 
-	// Exemplo 2: LikeAnd - busca por "john" E "doe" no campo nome
+	// Example 2: LikeAnd - search for "john" AND "doe" in the name field
 	p2, err := paginate.NewPaginator(
 		paginate.WithTable("users"),
 		paginate.WithStruct(User{}),
@@ -46,11 +46,11 @@ func main() {
 	}
 
 	query2, args2 := p2.GenerateSQL()
-	fmt.Println("Exemplo 2 - LikeAnd:")
+	fmt.Println("Example 2 - LikeAnd:")
 	fmt.Printf("Query: %s\n", query2)
 	fmt.Printf("Args: %v\n\n", args2)
 
-	// Exemplo 3: EqOr - idade igual a 25 OU 30 OU 35
+	// Example 3: EqOr - age equal to 25 OR 30 OR 35
 	p3, err := paginate.NewPaginator(
 		paginate.WithTable("users"),
 		paginate.WithStruct(User{}),
@@ -63,11 +63,11 @@ func main() {
 	}
 
 	query3, args3 := p3.GenerateSQL()
-	fmt.Println("Exemplo 3 - EqOr:")
+	fmt.Println("Example 3 - EqOr:")
 	fmt.Printf("Query: %s\n", query3)
 	fmt.Printf("Args: %v\n\n", args3)
 
-	// Exemplo 4: EqAnd - ID igual a 1 E 2 (normalmente não faz sentido, mas é possível)
+	// Example 4: EqAnd - ID equal to 1 AND 2 (normally doesn't make sense, but it's possible)
 	p4, err := paginate.NewPaginator(
 		paginate.WithTable("users"),
 		paginate.WithStruct(User{}),
@@ -80,16 +80,16 @@ func main() {
 	}
 
 	query4, args4 := p4.GenerateSQL()
-	fmt.Println("Exemplo 4 - EqAnd:")
+	fmt.Println("Example 4 - EqAnd:")
 	fmt.Printf("Query: %s\n", query4)
 	fmt.Printf("Args: %v\n\n", args4)
 
-	// Exemplo 5: Filtros de comparação (Gte, Gt, Lte, Lt)
+	// Example 5: Comparison filters (Gte, Gt, Lte, Lt)
 	p5, err := paginate.NewPaginator(
 		paginate.WithTable("users"),
 		paginate.WithStruct(User{}),
-		paginate.WithGte(map[string]any{"age": 18}), // idade >= 18
-		paginate.WithLte(map[string]any{"age": 65}), // idade <= 65
+		paginate.WithGte(map[string]any{"age": 18}), // age >= 18
+		paginate.WithLte(map[string]any{"age": 65}), // age <= 65
 		paginate.WithGt(map[string]any{"id": 0}),    // id > 0
 		paginate.WithLt(map[string]any{"id": 1000}), // id < 1000
 	)
@@ -98,11 +98,11 @@ func main() {
 	}
 
 	query5, args5 := p5.GenerateSQL()
-	fmt.Println("Exemplo 5 - Filtros de Comparação:")
+	fmt.Println("Example 5 - Comparison Filters:")
 	fmt.Printf("Query: %s\n", query5)
 	fmt.Printf("Args: %v\n\n", args5)
 
-	// Exemplo 6: Combinando múltiplos filtros
+	// Example 6: Combining multiple filters
 	p6, err := paginate.NewPaginator(
 		paginate.WithTable("users"),
 		paginate.WithStruct(User{}),
@@ -121,11 +121,11 @@ func main() {
 	}
 
 	query6, args6 := p6.GenerateSQL()
-	fmt.Println("Exemplo 6 - Filtros Combinados:")
+	fmt.Println("Example 6 - Combined Filters:")
 	fmt.Printf("Query: %s\n", query6)
 	fmt.Printf("Args: %v\n\n", args6)
 
-	// Exemplo 7: Usando o formato JSON como solicitado
+	// Example 7: Using JSON format as requested
 	// {"likeor": {"nome": ["vini", "joao"]}}
 	likeOrData := map[string][]string{
 		"name": {"vini", "joao"},
@@ -142,7 +142,7 @@ func main() {
 
 	query7, args7 := p7.GenerateSQL()
 	count7, countArgs7 := p7.GenerateCountQuery()
-	fmt.Println("Exemplo 7 - Formato JSON (likeor):")
+	fmt.Println("Example 7 - JSON Format (likeor):")
 	fmt.Printf("Query: %s\n", query7)
 	fmt.Printf("Args: %v\n", args7)
 	fmt.Printf("Count Query: %s\n", count7)

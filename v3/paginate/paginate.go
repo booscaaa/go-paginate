@@ -299,6 +299,10 @@ func (params *QueryParams) GenerateSQL() (string, []any) {
 
 	// Replace placeholders
 	query, args = replacePlaceholders(query, args)
+	
+	// Log SQL if debug mode is enabled
+	logSQL("GenerateSQL", query, args)
+	
 	return query, args
 }
 
@@ -347,8 +351,15 @@ func (params *QueryParams) GenerateCountQuery() (string, []any) {
 		countQuery = re.ReplaceAllStringFunc(countQuery, func(match string) string {
 			return "''" + match + "''"
 		})
+		
+		// Log SQL if debug mode is enabled
+		logSQL("GenerateCountQuery (Vacuum)", countQuery, args)
+		
 		return countQuery, args
 	}
+
+	// Log SQL if debug mode is enabled
+	logSQL("GenerateCountQuery", query, args)
 
 	return query, args
 }

@@ -2,13 +2,14 @@ package paginate
 
 import (
 	"fmt"
+	"log/slog"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
 )
 
-// PaginationParams representa os parâmetros de paginação que podem ser extraídos de query params
+// PaginationParams represents pagination parameters that can be extracted from query params
 type PaginationParams struct {
 	Page           int                 `query:"page"`
 	Limit          int                 `query:"limit"`
@@ -31,11 +32,11 @@ type PaginationParams struct {
 	Lt             map[string]any      `query:"lt"`
 }
 
-// BindQueryParams faz bind de url.Values para uma struct de paginação
+// BindQueryParams binds url.Values to a pagination struct
 func BindQueryParams(queryParams url.Values, target any) error {
 	v := reflect.ValueOf(target)
 	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
-		return fmt.Errorf("target deve ser um ponteiro para struct")
+		return fmt.Errorf("target must be a pointer to struct")
 	}
 
 	v = v.Elem()
@@ -66,7 +67,7 @@ func BindQueryParams(queryParams url.Values, target any) error {
 		}
 
 		if err := setFieldValue(field, values); err != nil {
-			return fmt.Errorf("erro ao definir campo %s: %w", fieldType.Name, err)
+			return fmt.Errorf("error setting field %s: %w", fieldType.Name, err)
 		}
 	}
 
@@ -133,7 +134,7 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 				for _, value := range values {
 					var elem reflect.Value
 					if sliceType.Kind() == reflect.Interface {
-						// Tentar converter para número, senão manter como string
+						// Try to convert to number, otherwise keep as string
 						if intVal, err := strconv.Atoi(value); err == nil {
 							elem = reflect.ValueOf(intVal)
 						} else if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
@@ -151,7 +152,7 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 				// Para any, usar o primeiro valor
 				if len(values) > 0 {
 					value := values[0]
-					// Tentar converter para número, senão manter como string
+					// Try to convert to number, otherwise keep as string
 					if intVal, err := strconv.Atoi(value); err == nil {
 						mapValue = reflect.ValueOf(intVal)
 					} else if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
@@ -207,7 +208,7 @@ func setFieldValue(field reflect.Value, values []string) error {
 		}
 		field.Set(slice)
 	default:
-		return fmt.Errorf("tipo de campo não suportado: %s", field.Kind())
+		return fmt.Errorf("unsupported field type: %s", field.Kind())
 	}
 
 	return nil
@@ -227,7 +228,7 @@ func BindQueryParamsToStruct(queryParams url.Values) (*PaginationParams, error) 
 		return nil, err
 	}
 
-	// Se ItemsPerPage foi definido mas Limit não, usar ItemsPerPage como Limit
+	// If ItemsPerPage was set but Limit wasn't, use ItemsPerPage as Limit
 	if params.ItemsPerPage != 10 && params.Limit == 10 {
 		params.Limit = params.ItemsPerPage
 	}
@@ -239,8 +240,53 @@ func BindQueryParamsToStruct(queryParams url.Values) (*PaginationParams, error) 
 func BindQueryStringToStruct(queryString string) (*PaginationParams, error) {
 	queryParams, err := url.ParseQuery(queryString)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao fazer parse da query string: %w", err)
+		return nil, fmt.Errorf("error parsing query string: %w", err)
 	}
 
 	return BindQueryParamsToStruct(queryParams)
+}
+
+// NewPaginationParams cria uma nova instância com valores padrão globais
+func NewPaginationParams() *PaginationParams {
+	return &PaginationParams{
+		Page:    1,
+		Limit:   GetDefaultLimit(), // Use global default
+		LikeOr:  make(map[string][]string),
+		LikeAnd: make(map[string][]string),
+		EqOr:    make(map[string][]any),
+		EqAnd:   make(map[string][]any),
+		Gte:     make(map[string]any),
+		Gt:      make(map[string]any),
+		Lte:     make(map[string]any),
+		Lt:      make(map[string]any),
+	}
+}
+
+// setDefaultValues define valores padrão usando configuração global
+func setDefaultValues(params *PaginationParams) {
+	if params.Page == 0 {
+		params.Page = 1
+	}
+	if params.Limit == 0 {
+		params.Limit = GetDefaultLimit() // Use global default
+	}
+
+	// Apply global max limit
+	maxLimit := GetMaxLimit()
+	if params.Limit > maxLimit {
+		logger := slog.With("component", "go-paginate-bind")
+		logger.Warn("Limit exceeds maximum, applying global max limit",
+			"requested_limit", params.Limit,
+			"max_limit", maxLimit)
+		params.Limit = maxLimit
+	}
+
+	// If ItemsPerPage was set but Limit wasn't, use ItemsPerPage as Limit
+	if params.ItemsPerPage != GetDefaultLimit() && params.Limit == GetDefaultLimit() {
+		params.Limit = params.ItemsPerPage
+		// Apply max limit validation again
+		if params.Limit > maxLimit {
+			params.Limit = maxLimit
+		}
+	}
 }

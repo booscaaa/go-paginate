@@ -21,36 +21,36 @@ type User struct {
 }
 
 func main() {
-	fmt.Println("=== Exemplos da Nova API Fluente ===")
+	fmt.Println("=== Examples of the New Fluent API ===")
 	fmt.Println()
 
-	// Exemplo 1: Uso básico
+	// Example 1: Basic usage
 	fmt.Println("1. Uso Básico:")
 	basicExample()
 	fmt.Println()
 
-	// Exemplo 2: Filtros avançados
-	fmt.Println("2. Filtros Avançados:")
+	// Example 2: Advanced filters
+	fmt.Println("2. Advanced Filters:")
 	advancedFiltersExample()
 	fmt.Println()
 
-	// Exemplo 3: Joins
+	// Example 3: Joins
 	fmt.Println("3. Joins:")
 	joinsExample()
 	fmt.Println()
 
-	// Exemplo 4: A partir de JSON
+	// Example 4: From JSON
 	fmt.Println("4. A partir de JSON:")
 	fromJSONExample()
 	fmt.Println()
 
-	// Exemplo 5: Comparação com API antiga
+	// Example 5: Comparison with old API
 	fmt.Println("5. Comparação com API Antiga:")
 	comparisonExample()
 	fmt.Println()
 
-	// Exemplo 6: Filtros complexos combinados
-	fmt.Println("6. Filtros Complexos Combinados:")
+	// Example 6: Combined complex filters
+	fmt.Println("6. Combined Complex Filters:")
 	complexFiltersExample()
 }
 
@@ -67,7 +67,7 @@ func basicExample() {
 		BuildSQL()
 
 	if err != nil {
-		log.Printf("Erro: %v", err)
+		log.Printf("Error: %v", err)
 		return
 	}
 
@@ -76,7 +76,7 @@ func basicExample() {
 }
 
 func advancedFiltersExample() {
-	// Filtros avançados com a nova API
+	// Advanced filters with the new API
 	sql, args, err := paginate.NewBuilder().
 		Table("users").
 		Model(&User{}).
@@ -90,7 +90,7 @@ func advancedFiltersExample() {
 		BuildSQL()
 
 	if err != nil {
-		log.Printf("Erro: %v", err)
+		log.Printf("Error: %v", err)
 		return
 	}
 
@@ -112,7 +112,7 @@ func joinsExample() {
 		BuildSQL()
 
 	if err != nil {
-		log.Printf("Erro: %v", err)
+		log.Printf("Error: %v", err)
 		return
 	}
 
@@ -121,7 +121,7 @@ func joinsExample() {
 }
 
 func fromJSONExample() {
-	// Construir a partir de JSON (útil para APIs REST)
+	// Build from JSON (useful for REST APIs)
 	jsonQuery := `{
 		"page": 1,
 		"limit": 10,
@@ -152,7 +152,7 @@ func fromJSONExample() {
 		BuildSQL()
 
 	if err != nil {
-		log.Printf("Erro: %v", err)
+		log.Printf("Error: %v", err)
 		return
 	}
 
@@ -180,7 +180,7 @@ func comparisonExample() {
 	)
 
 	if err != nil {
-		log.Printf("Erro: %v", err)
+		log.Printf("Error: %v", err)
 		return
 	}
 
@@ -201,7 +201,7 @@ func comparisonExample() {
 		BuildSQL()
 
 	if err != nil {
-		log.Printf("Erro: %v", err)
+		log.Printf("Error: %v", err)
 		return
 	}
 
@@ -213,45 +213,45 @@ func comparisonExample() {
 }
 
 func complexFiltersExample() {
-	// Exemplo de filtros muito complexos de forma simples
+	// Example of very complex filters in a simple way
 	sql, args, err := paginate.NewBuilder().
 		Table("users u").
 		Model(&User{}).
 		Select("u.*", "d.name as department_name", "r.name as role_name").
 		LeftJoin("departments d", "u.dept_id = d.id").
 		LeftJoin("roles r", "u.role_id = r.id").
-		// Busca em múltiplos campos
+		// Search in multiple fields
 		SearchOr("name", "John", "Jane", "Bob").
 		SearchAnd("email", "@company.com").
-		// Filtros de igualdade
+		// Equality filters
 		WhereIn("u.status", "active", "pending").
 		WhereIn("d.type", "engineering", "product").
-		// Filtros de comparação
+		// Comparison filters
 		WhereGreaterThanOrEqual("u.age", 21).
 		WhereLessThan("u.age", 65).
 		WhereGreaterThan("u.salary", 50000).
 		WhereLessThanOrEqual("u.salary", 200000).
-		// Filtros customizados
+		// Custom filters
 		Where("u.created_at >= ?", "2023-01-01").
 		Where("u.last_login_at IS NOT NULL").
-		// Ordenação
+		// Ordering
 		OrderBy("d.name").
 		OrderBy("u.name").
 		OrderByDesc("u.salary").
-		// Paginação
+		// Pagination
 		Page(1).
 		Limit(25).
 		BuildSQL()
 
 	if err != nil {
-		log.Printf("Erro: %v", err)
+		log.Printf("Error: %v", err)
 		return
 	}
 
 	fmt.Printf("SQL Complexo: %s\n", sql)
 	fmt.Printf("Args: %v\n", args)
 
-	// Também podemos gerar a query de contagem
+	// We can also generate the count query
 	countSQL, countArgs, err := paginate.NewBuilder().
 		Table("users u").
 		Model(&User{}).
@@ -270,7 +270,7 @@ func complexFiltersExample() {
 		BuildCountSQL()
 
 	if err != nil {
-		log.Printf("Erro na query de contagem: %v", err)
+		log.Printf("Error in count query: %v", err)
 		return
 	}
 

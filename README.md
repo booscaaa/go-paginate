@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/booscaaa/go-paginate/master/assets/logo.png" alt="Go Paginate Logo" width="200">
+  <img src="https://raw.githubusercontent.com/booscaaa/go-paginate/master/assets/icon.png" alt="Go Paginate Logo" width="200">
 </p>
 
 <p align="center">
@@ -151,7 +151,13 @@ func complexFluentExample() {
     fmt.Printf("   Args: %v\n", args)
 
     // Output:
-    // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id LEFT JOIN user_profiles p ON u.id = p.user_id WHERE (u.name ILIKE $1 OR u.email ILIKE $2) AND (u.status ILIKE $3 OR u.status ILIKE $4 OR u.status ILIKE $5) AND (u.email ILIKE $6) AND u.is_active = $7 AND u.dept_id IN ($8, $9, $10, $11) AND u.age > $12 AND u.salary <= $13 AND u.created_at BETWEEN $14 AND $15 ORDER BY d.name ASC, u.salary DESC, u.name ASC LIMIT 25 OFFSET 25
+    // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, 
+    // u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id 
+    // LEFT JOIN user_profiles p ON u.id = p.user_id WHERE (u.name ILIKE $1 OR u.email ILIKE $2) 
+    // AND (u.status ILIKE $3 OR u.status ILIKE $4 OR u.status ILIKE $5) AND (u.email ILIKE $6) 
+    // AND u.is_active = $7 AND u.dept_id IN ($8, $9, $10, $11) AND u.age > $12 AND u.salary <= $13 
+    // AND u.created_at BETWEEN $14 AND $15 ORDER BY d.name ASC, u.salary DESC, u.name ASC LIMIT 25 OFFSET 25
+    
     // Args: [%john% %john% %active% %pending% %verified% %@company.com% true 1 2 3 5 21 150000 2023-01-01 2024-12-31]
 }
 
@@ -208,7 +214,14 @@ func fromJSONExample() {
     fmt.Printf("   Args: %v\n", args)
 
     // Output:
-     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 OR u.status ILIKE $6 OR d.name ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9) AND (u.email ILIKE $10) AND (u.age = $11 OR u.age = $12 OR u.age = $13 OR u.age = $14 OR u.dept_id = $15 OR u.dept_id = $16 OR u.dept_id = $17) AND u.salary >= $18 AND u.age >= $19 AND u.created_at > $20 AND u.salary <= $21 AND u.last_login <= $22 AND u.updated_at < $23 ORDER BY u.salary DESC, d.name ASC, u.created_at DESC LIMIT 50 OFFSET 0
+     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at,
+     //  u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id 
+     // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 
+     // OR u.status ILIKE $6 OR d.name ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9) AND (u.email ILIKE $10) 
+     // AND (u.age = $11 OR u.age = $12 OR u.age = $13 OR u.age = $14 OR u.dept_id = $15 OR u.dept_id = $16 OR u.dept_id = $17) 
+     // AND u.salary >= $18 AND u.age >= $19 AND u.created_at > $20 AND u.salary <= $21 AND u.last_login <= $22 
+     // AND u.updated_at < $23 ORDER BY u.salary DESC, d.name ASC, u.created_at DESC LIMIT 50 OFFSET 0
+     
      // Args: [%engineer% %engineer% %engineer% %active% %pending% %on_leave% %Engineering% %DevOps% %QA% %@company.com% 25 30 35 40 1 2 3 50000 22 2020-01-01 200000 2024-12-31 2024-12-31]
 }
 
@@ -270,7 +283,15 @@ func fromStructExample() {
     fmt.Printf("   Args: %v\n", args)
 
     // Output:
-     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id LEFT JOIN user_roles ur ON u.id = ur.user_id WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 OR d.name ILIKE $6 OR d.name ILIKE $7 OR d.name ILIKE $8) AND (u.email ILIKE $9) AND (u.age = $10 OR u.age = $11 OR u.age = $12 OR u.age = $13 OR u.dept_id = $14 OR u.dept_id = $15 OR u.dept_id = $16 OR u.dept_id = $17) AND u.is_active = $18 AND u.salary >= $19 AND u.age >= $20 AND u.created_at >= $21 AND u.last_login > $22 AND u.salary <= $23 AND u.updated_at <= $24 AND u.age < $25 ORDER BY u.salary DESC, u.name ASC, u.age DESC LIMIT 30 OFFSET 60
+     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, 
+     // u.updated_at, u.is_active, u.last_login FROM users u 
+     // INNER JOIN departments d ON u.dept_id = d.id LEFT JOIN user_roles ur ON u.id = ur.user_id 
+     // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 
+     // OR d.name ILIKE $6 OR d.name ILIKE $7 OR d.name ILIKE $8) AND (u.email ILIKE $9) AND (u.age = $10 OR u.age = $11 
+     // OR u.age = $12 OR u.age = $13 OR u.dept_id = $14 OR u.dept_id = $15 OR u.dept_id = $16 OR u.dept_id = $17) 
+     // AND u.is_active = $18 AND u.salary >= $19 AND u.age >= $20 AND u.created_at >= $21 AND u.last_login > $22 
+     // AND u.salary <= $23 AND u.updated_at <= $24 AND u.age < $25 ORDER BY u.salary DESC, u.name ASC, u.age DESC LIMIT 30 OFFSET 60
+     
      // Args: [%senior% %senior% %senior% %active% %verified% %Engineering% %Product% %Design% %@company.com% 28 32 35 40 1 2 4 7 true 75000 25 2021-01-01 2024-01-01 250000 2024-12-31 60]
 }
 
@@ -320,7 +341,12 @@ func queryStringBindingExample() {
     fmt.Printf("   Direct Bound: %+v\n", directParams)
 
     // Output:
-    // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 OR d.name ILIKE $6) AND (u.email ILIKE $7) AND (u.age = $8 OR u.age = $9 OR u.age = $10) AND u.is_active = $11 AND u.salary >= $12 AND u.age >= $13 AND u.created_at > $14 AND u.salary <= $15 AND u.updated_at < $16 ORDER BY u.salary DESC, d.name ASC, u.created_at DESC LIMIT 40 OFFSET 40
+    // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, 
+    // u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id 
+    // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 OR d.name ILIKE $6) AND (u.email ILIKE $7) AND (u.age = $8 
+    // OR u.age = $9 OR u.age = $10) AND u.is_active = $11 AND u.salary >= $12 AND u.age >= $13 
+    // AND u.created_at > $14 AND u.salary <= $15 AND u.updated_at < $16 ORDER BY u.salary DESC, d.name ASC, u.created_at DESC LIMIT 40 OFFSET 40
+    
     // Args: [%developer% %developer% %developer% %active% %pending% %Engineering% %@company.com% 25 30 35 true 60000 23 2022-01-01 180000 2024-12-31]
 }
 
@@ -423,10 +449,35 @@ func ultimateComplexExample() {
      fmt.Printf("   Count Args: %v\n", countArgs)
 
      // Output:
-     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id INNER JOIN user_roles ur ON u.id = ur.user_id INNER JOIN roles r ON ur.role_id = r.id LEFT JOIN user_skills us ON u.id = us.user_id LEFT JOIN skills s ON us.skill_id = s.id LEFT JOIN locations l ON u.location_id = l.id WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4) AND (u.status ILIKE $5 OR u.status ILIKE $6 OR u.status ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9 OR d.name ILIKE $10 OR d.name ILIKE $11 OR r.name ILIKE $12 OR r.name ILIKE $13 OR r.name ILIKE $14 OR r.name ILIKE $15) AND (u.email ILIKE $16 AND s.name ILIKE $17 AND s.name ILIKE $18) AND (u.experience_level = $19 OR u.experience_level = $20 OR u.experience_level = $21 OR u.team_size = $22 OR u.team_size = $23 OR u.team_size = $24 OR u.team_size = $25 OR u.location_id = $26 OR u.location_id = $27 OR u.location_id = $28 OR u.location_id = $29 OR u.location_id = $30) AND u.is_active = $31 AND u.is_verified = $32 AND u.has_security_clearance = $33 AND u.salary >= $34 AND u.age >= $35 AND u.years_experience >= $36 AND u.team_size >= $37 AND u.created_at >= $38 AND u.performance_score >= $39 AND u.last_promotion_date > $40 AND u.last_review_score > $41 AND u.salary <= $42 AND u.age <= $43 AND u.updated_at <= $44 AND u.days_since_last_login < $45 AND u.open_tickets < $46 ORDER BY u.salary DESC, u.performance_score DESC, d.name ASC, u.name ASC, u.created_at DESC LIMIT 100 OFFSET 0
+     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, 
+     // u.is_active, u.last_login FROM users u 
+     // INNER JOIN departments d ON u.dept_id = d.id INNER JOIN user_roles ur ON u.id = ur.user_id 
+     // INNER JOIN roles r ON ur.role_id = r.id LEFT JOIN user_skills us ON u.id = us.user_id 
+     // LEFT JOIN skills s ON us.skill_id = s.id LEFT JOIN locations l ON u.location_id = l.id 
+     // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4) AND (u.status ILIKE $5 OR u.status ILIKE $6 
+     // OR u.status ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9 OR d.name ILIKE $10 OR d.name ILIKE $11 OR r.name ILIKE $12 
+     // OR r.name ILIKE $13 OR r.name ILIKE $14 OR r.name ILIKE $15) AND (u.email ILIKE $16 AND s.name ILIKE $17 AND s.name ILIKE $18) 
+     // AND (u.experience_level = $19 OR u.experience_level = $20 OR u.experience_level = $21 OR u.team_size = $22 OR u.team_size = $23 
+     // OR u.team_size = $24 OR u.team_size = $25 OR u.location_id = $26 OR u.location_id = $27 OR u.location_id = $28 OR u.location_id = $29 
+     // OR u.location_id = $30) AND u.is_active = $31 AND u.is_verified = $32 AND u.has_security_clearance = $33 AND u.salary >= $34 AND u.age >= $35 
+     // AND u.years_experience >= $36 AND u.team_size >= $37 AND u.created_at >= $38 AND u.performance_score >= $39 AND u.last_promotion_date > $40 
+     // AND u.last_review_score > $41 AND u.salary <= $42 AND u.age <= $43 AND u.updated_at <= $44 AND u.days_since_last_login < $45 
+     // AND u.open_tickets < $46 ORDER BY u.salary DESC, u.performance_score DESC, d.name ASC, u.name ASC, u.created_at DESC LIMIT 100 OFFSET 0
+     
      // Args: [%tech lead% %tech lead% %tech lead% %tech lead% %active% %verified% %premium% %Engineering% %DevOps% %Architecture% %Platform% %Senior% %Lead% %Principal% %Staff% %@company.com% %golang% %kubernetes% senior lead principal 5 8 12 15 1 2 3 5 8 true true true 120000 28 5 3 2020-01-01 8.5 2022-01-01 4.0 350000 55 2024-12-31 30 5]
-     //
-     // Count SQL: SELECT COUNT(*) FROM users u INNER JOIN departments d ON u.dept_id = d.id INNER JOIN user_roles ur ON u.id = ur.user_id INNER JOIN roles r ON ur.role_id = r.id LEFT JOIN user_skills us ON u.id = us.user_id LEFT JOIN skills s ON us.skill_id = s.id LEFT JOIN locations l ON u.location_id = l.id WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4) AND (u.status ILIKE $5 OR u.status ILIKE $6 OR u.status ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9 OR d.name ILIKE $10 OR d.name ILIKE $11 OR r.name ILIKE $12 OR r.name ILIKE $13 OR r.name ILIKE $14 OR r.name ILIKE $15) AND (u.email ILIKE $16 AND s.name ILIKE $17 AND s.name ILIKE $18) AND (u.experience_level = $19 OR u.experience_level = $20 OR u.experience_level = $21 OR u.team_size = $22 OR u.team_size = $23 OR u.team_size = $24 OR u.team_size = $25 OR u.location_id = $26 OR u.location_id = $27 OR u.location_id = $28 OR u.location_id = $29 OR u.location_id = $30) AND u.is_active = $31 AND u.is_verified = $32 AND u.has_security_clearance = $33 AND u.salary >= $34 AND u.age >= $35 AND u.years_experience >= $36 AND u.team_size >= $37 AND u.created_at >= $38 AND u.performance_score >= $39 AND u.last_promotion_date > $40 AND u.last_review_score > $41 AND u.salary <= $42 AND u.age <= $43 AND u.updated_at <= $44 AND u.days_since_last_login < $45 AND u.open_tickets < $46
+
+     // Count SQL: SELECT COUNT(*) FROM users u INNER JOIN departments d ON u.dept_id = d.id INNER JOIN user_roles ur ON u.id = ur.user_id 
+     // INNER JOIN roles r ON ur.role_id = r.id LEFT JOIN user_skills us ON u.id = us.user_id LEFT JOIN skills s ON us.skill_id = s.id 
+     // LEFT JOIN locations l ON u.location_id = l.id WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4) 
+     // AND (u.status ILIKE $5 OR u.status ILIKE $6 OR u.status ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9 OR d.name ILIKE $10 OR d.name 
+     // ILIKE $11 OR r.name ILIKE $12 OR r.name ILIKE $13 OR r.name ILIKE $14 OR r.name ILIKE $15) AND (u.email ILIKE $16 AND s.name ILIKE $17 
+     // AND s.name ILIKE $18) AND (u.experience_level = $19 OR u.experience_level = $20 OR u.experience_level = $21 OR u.team_size = $22 
+     // OR u.team_size = $23 OR u.team_size = $24 OR u.team_size = $25 OR u.location_id = $26 OR u.location_id = $27 OR u.location_id = $28 
+     // OR u.location_id = $29 OR u.location_id = $30) AND u.is_active = $31 AND u.is_verified = $32 AND u.has_security_clearance = $33 
+     // AND u.salary >= $34 AND u.age >= $35 AND u.years_experience >= $36 AND u.team_size >= $37 AND u.created_at >= $38 
+     // AND u.performance_score >= $39 AND u.last_promotion_date > $40 AND u.last_review_score > $41 AND u.salary <= $42 
+     // AND u.age <= $43 AND u.updated_at <= $44 AND u.days_since_last_login < $45 AND u.open_tickets < $46
+
      // Count Args: [%tech lead% %tech lead% %tech lead% %tech lead% %active% %verified% %premium% %Engineering% %DevOps% %Architecture% %Platform% %Senior% %Lead% %Principal% %Staff% %@company.com% %golang% %kubernetes% senior lead principal 5 8 12 15 1 2 3 5 8 true true true 120000 28 5 3 2020-01-01 8.5 2022-01-01 4.0 350000 55 2024-12-31 30 5]
  }
 ```
@@ -1151,11 +1202,9 @@ git push origin feature/amazing-feature
 
 ## 📚 Additional Resources
 
-- 📖 **[Complete Bind Documentation](BIND_README.md)** - Detailed guide on query parameter binding
+- 📖 **[Complete Bind Documentation](v3/BIND_README.md)** - Detailed guide on query parameter binding
 - 🔗 **[Go Reference](https://pkg.go.dev/github.com/booscaaa/go-paginate/v3)** - Complete API documentation
 - 📝 **[Examples Repository](https://github.com/booscaaa/go-paginate/tree/master/v3)** - More example code
-- 🎥 **[Video Tutorials](https://youtube.com/playlist?list=PLExample)** - Step-by-step guides
-- 💬 **[Discord Community](https://discord.gg/example)** - Get help and discuss
 
 ---
 
@@ -1163,12 +1212,6 @@ git push origin feature/amazing-feature
 
 This project is part of my personal portfolio. I'll be happy to receive feedback about the project, code, structure, or anything that could make me a better developer!
 
-### Get in Touch
-
-- 📧 **Email**: [boscardinvinicius@gmail.com](mailto:boscardinvinicius@gmail.com)
-- 💼 **LinkedIn**: [booscaaa](https://www.linkedin.com/in/booscaaa/)
-- 🐙 **GitHub**: [booscaaa](https://github.com/booscaaa)
-- 🐦 **Twitter**: [@booscaaa](https://twitter.com/booscaaa)
 
 ### Support the Project
 
@@ -1178,7 +1221,6 @@ If Go Paginate v3 has been helpful to you, consider:
 - 🐛 **Reporting issues**
 - 💡 **Suggesting improvements**
 - 📢 **Sharing with others**
-- ☕ **[Buy me a coffee](https://buymeacoffee.com/booscaaa)**
 
 ---
 
@@ -1189,7 +1231,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](https://g
 ```
 MIT License
 
-Copyright (c) 2024 Vinícius Boscardin
+Copyright (c) 2025 Vinícius Boscardin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1210,19 +1252,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
----
-
-## 🎉 Acknowledgments
-
-- Thanks to all contributors who have helped improve this library
-- Inspired by Laravel's Eloquent ORM and Django's QuerySet
-- Built with ❤️ for the Go community
-
----
-
-<p align="center">
-  <strong>Made with ❤️ by <a href="https://github.com/booscaaa">Vinícius Boscardin</a></strong>
-</p>
 
 <p align="center">
   <a href="#-why-go-paginate-v3">⬆️ Back to top</a>

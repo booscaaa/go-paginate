@@ -9,14 +9,14 @@ import (
 )
 
 func main() {
-	fmt.Println("=== Exemplo de Bind de Query Parameters ===")
+	fmt.Println("=== Example of Query Parameters Binding ===")
 
-	// Exemplo 1: Usando BindQueryParamsToStruct com parâmetros básicos
+	// Example 1: Using BindQueryParamsToStruct with basic parameters
 	fmt.Println("\n1. Bind de parâmetros básicos:")
 	queryString1 := "page=2&limit=25&search=john&search_fields=name,email&vacuum=true"
 	params1, err := paginate.BindQueryStringToStruct(queryString1)
 	if err != nil {
-		log.Fatalf("Erro ao fazer bind: %v", err)
+		log.Fatalf("Error binding: %v", err)
 	}
 
 	fmt.Printf("Query String: %s\n", queryString1)
@@ -27,12 +27,12 @@ func main() {
 	fmt.Printf("  SearchFields: %v\n", params1.SearchFields)
 	fmt.Printf("  Vacuum: %t\n", params1.Vacuum)
 
-	// Exemplo 2: Usando parâmetros complexos com arrays
+	// Example 2: Using complex parameters with arrays
 	fmt.Println("\n2. Bind de parâmetros complexos:")
 	queryString2 := "page=1&likeor[status]=active&likeor[status]=pending&eqor[age]=25&eqor[age]=30&gte[created_at]=2023-01-01&gt[score]=80"
 	params2, err := paginate.BindQueryStringToStruct(queryString2)
 	if err != nil {
-		log.Fatalf("Erro ao fazer bind: %v", err)
+		log.Fatalf("Error binding: %v", err)
 	}
 
 	fmt.Printf("Query String: %s\n", queryString2)
@@ -42,20 +42,20 @@ func main() {
 	fmt.Printf("  Gte: %v\n", params2.Gte)
 	fmt.Printf("  Gt: %v\n", params2.Gt)
 
-	// Exemplo 3: Usando url.Values diretamente
+	// Example 3: Using url.Values directly
 	fmt.Println("\n3. Bind usando url.Values:")
 	queryParams := url.Values{
-		"page":             {"3"},
-		"limit":            {"50"},
-		"sort_columns":     {"name,created_at"},
-		"sort_directions":  {"ASC,DESC"},
-		"likeand[name]": {"admin"},
-		"lte[updated_at]":  {"2023-12-31"},
+		"page":            {"3"},
+		"limit":           {"50"},
+		"sort_columns":    {"name,created_at"},
+		"sort_directions": {"ASC,DESC"},
+		"likeand[name]":   {"admin"},
+		"lte[updated_at]": {"2023-12-31"},
 	}
 
 	params3, err := paginate.BindQueryParamsToStruct(queryParams)
 	if err != nil {
-		log.Fatalf("Erro ao fazer bind: %v", err)
+		log.Fatalf("Error binding: %v", err)
 	}
 
 	fmt.Printf("Query Params: %v\n", queryParams)
@@ -67,7 +67,7 @@ func main() {
 	fmt.Printf("  LikeAnd: %v\n", params3.LikeAnd)
 	fmt.Printf("  Lte: %v\n", params3.Lte)
 
-	// Exemplo 4: Bind para struct customizada
+	// Example 4: Bind to custom struct
 	fmt.Println("\n4. Bind para struct customizada:")
 	type CustomPaginationParams struct {
 		Page    int      `query:"page"`
@@ -88,7 +88,7 @@ func main() {
 	customParams := &CustomPaginationParams{}
 	err = paginate.BindQueryParams(customQueryParams, customParams)
 	if err != nil {
-		log.Fatalf("Erro ao fazer bind customizado: %v", err)
+		log.Fatalf("Error binding custom: %v", err)
 	}
 
 	fmt.Printf("Custom Query Params: %v\n", customQueryParams)
@@ -99,29 +99,29 @@ func main() {
 	fmt.Printf("  Filters: %v\n", customParams.Filters)
 	fmt.Printf("  Active: %t\n", customParams.Active)
 
-	// Exemplo 5: Simulando uso em um handler HTTP
-	fmt.Println("\n5. Exemplo de uso em handler HTTP:")
+	// Example 5: Simulating use in an HTTP handler
+	fmt.Println("\n5. Example of usage in HTTP handler:")
 	simulateHTTPHandler()
 }
 
-// simulateHTTPHandler simula como usar o bind em um handler HTTP real
+// simulateHTTPHandler simulates how to use bind in a real HTTP handler
 func simulateHTTPHandler() {
-	// Simular uma URL de request HTTP com novo padrão de sort
+	// Simulate an HTTP request URL with new sort pattern
 	requestURL := "https://api.example.com/users?page=2&limit=20&search=john&search_fields=name,email&likeor[status]=active&likeor[status]=pending&gte[age]=18&sort=name&sort=-created_at"
 
-	// Parse da URL
+	// Parse the URL
 	parsedURL, err := url.Parse(requestURL)
 	if err != nil {
-		log.Fatalf("Erro ao fazer parse da URL: %v", err)
+		log.Fatalf("Error parsing URL: %v", err)
 	}
 
-	// Extrair query parameters
+	// Extract query parameters
 	queryParams := parsedURL.Query()
 
-	// Fazer bind para struct de paginação
+	// Bind to pagination struct
 	paginationParams, err := paginate.BindQueryParamsToStruct(queryParams)
 	if err != nil {
-		log.Fatalf("Erro ao fazer bind dos parâmetros: %v", err)
+		log.Fatalf("Error binding parameters: %v", err)
 	}
 
 	fmt.Printf("URL simulada: %s\n", requestURL)
@@ -136,17 +136,17 @@ func simulateHTTPHandler() {
 	fmt.Printf("  SortDirections: %v\n", paginationParams.SortDirections)
 	fmt.Printf("  Gte: %v\n", paginationParams.Gte)
 
-	// Agora você pode usar esses parâmetros para construir sua query de banco de dados
-	fmt.Println("\n✅ Parâmetros prontos para uso na construção da query!")
+	// Now you can use these parameters to build your database query
+	fmt.Println("\n✅ Parameters ready for use in query construction!")
 
-	// Exemplo adicional: Demonstrar como usar com FromStruct no builder
-	fmt.Println("\n6. Exemplo usando FromStruct com novo padrão de sort:")
+	// Additional example: Demonstrate how to use with FromStruct in builder
+	fmt.Println("\n6. Example using FromStruct with new sort pattern:")
 	demonstrateFromStructWithSort(paginationParams)
 }
 
-// demonstrateFromStructWithSort demonstra como usar FromStruct com o novo padrão de sort
+// demonstrateFromStructWithSort demonstrates how to use FromStruct with the new sort pattern
 func demonstrateFromStructWithSort(params *paginate.PaginationParams) {
-	// Definir uma struct de exemplo para o modelo
+	// Define an example struct for the model
 	type User struct {
 		ID        int    `json:"id" paginate:"id"`
 		Name      string `json:"name" paginate:"name"`
@@ -165,7 +165,7 @@ func demonstrateFromStructWithSort(params *paginate.PaginationParams) {
 	// Gerar SQL
 	sql, args, err := builder.BuildSQL()
 	if err != nil {
-		log.Fatalf("Erro ao gerar SQL: %v", err)
+		log.Fatalf("Error generating SQL: %v", err)
 	}
 
 	fmt.Printf("SQL gerado: %s\n", sql)
