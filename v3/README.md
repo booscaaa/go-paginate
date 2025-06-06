@@ -23,7 +23,7 @@ Go Paginate v3 is the **most powerful and flexible** Go pagination library avail
 ### ✨ Key Features
 
 - 🚀 **3 Powerful APIs**: Fluent Builder, Automatic Binding, Traditional
-- 🔍 **Advanced Filtering**: 15+ filter types including SearchOr, SearchAnd, EqualsOr, EqualsAnd, Gte, Gt, Lte, Lt
+- 🔍 **Advanced Filtering**: 15+ filter types including LikeOr, LikeAnd, EqOr, EqAnd, Gte, Gt, Lte, Lt
 - 🔗 **Automatic HTTP Binding**: Convert query parameters to structs automatically
 - 📊 **Complex Joins**: Full support for INNER, LEFT, RIGHT JOINs
 - 🎯 **Type Safety**: Compile-time validation and runtime type checking
@@ -122,8 +122,8 @@ sql, args, err := paginate.NewBuilder().
     WhereGreaterThanOrEqual("u.age", 21).
     WhereLessThanOrEqual("u.salary", 150000).
     WhereBetween("u.created_at", "2023-01-01", "2023-12-31").
-    SearchOr("u.name", "John", "Jane").
-    SearchAnd("u.email", "@company.com").
+    LikeOr("u.name", "John", "Jane").
+    LikeAnd("u.email", "@company.com").
     OrderBy("d.name", "u.name").
     OrderByDesc("u.created_at").
     BuildSQL()
@@ -172,7 +172,7 @@ p, err := paginate.NewPaginator(
     paginate.WithItemsPerPage(20),
     paginate.WithSearch("john"),
     paginate.WithSearchFields([]string{"name", "email"}),
-    paginate.WithEqualsOr(map[string][]any{
+    paginate.WithEqOr(map[string][]any{
         "status": {"active", "pending"},
     }),
     paginate.WithGte(map[string]any{"age": 18}),
@@ -203,7 +203,7 @@ countSQL, countArgs := p.GenerateCountQuery()
 | Method                            | Description | Example                                        |
 | --------------------------------- | ----------- | ---------------------------------------------- |
 | `WhereIn(field, values...)`       | IN clause   | `WhereIn("role", "admin", "manager")`          |
-| `WhereEqualsOr(field, values...)` | OR equality | `WhereEqualsOr("status", "active", "pending")` |
+| `WhereEqOr(field, values...)` | OR equality | `WhereEqOr("status", "active", "pending")` |
 
 ### Comparison Filters
 
@@ -219,8 +219,8 @@ countSQL, countArgs := p.GenerateCountQuery()
 
 | Method                        | Description           | Example                              |
 | ----------------------------- | --------------------- | ------------------------------------ |
-| `SearchOr(field, values...)`  | Search with OR logic  | `SearchOr("name", "John", "Jane")`   |
-| `SearchAnd(field, values...)` | Search with AND logic | `SearchAnd("email", "@company.com")` |
+| `LikeOr(field, values...)`  | Search with OR logic  | `LikeOr("name", "John", "Jane")`   |
+| `LikeAnd(field, values...)` | Search with AND logic | `LikeAnd("email", "@company.com")` |
 
 ### Join Operations
 
@@ -278,10 +278,10 @@ countSQL, countArgs := p.GenerateCountQuery()
 
 | Parameter           | Type                | Description           | Example                                               |
 | ------------------- | ------------------- | --------------------- | ----------------------------------------------------- |
-| `search_or[field]`  | map[string][]string | OR search             | `?search_or[status]=active&search_or[status]=pending` |
-| `search_and[field]` | map[string][]string | AND search            | `?search_and[name]=admin`                             |
-| `equals_or[field]`  | map[string][]any    | OR equality           | `?equals_or[age]=25&equals_or[age]=30`                |
-| `equals_and[field]` | map[string][]any    | AND equality          | `?equals_and[role]=admin`                             |
+| `likeor[field]`     | map[string][]string | OR search             | `?likeor[status]=active&likeor[status]=pending`       |
+| `likeand[field]`    | map[string][]string | AND search            | `?likeand[name]=admin`                                |
+| `eqor[field]`       | map[string][]any    | OR equality           | `?eqor[age]=25&eqor[age]=30`                          |
+| `eqand[field]`      | map[string][]any    | AND equality          | `?eqand[role]=admin`                                  |
 | `gte[field]`        | map[string]any      | Greater than or equal | `?gte[age]=18`                                        |
 | `gt[field]`         | map[string]any      | Greater than          | `?gt[score]=80`                                       |
 | `lte[field]`        | map[string]any      | Less than or equal    | `?lte[price]=100.50`                                  |
@@ -363,8 +363,8 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
         WhereGreaterThanOrEqual("u.age", 21).
         WhereLessThanOrEqual("u.salary", 200000).
         WhereBetween("u.created_at", "2023-01-01", "2023-12-31").
-        SearchOr("u.name", "John", "Jane", "Admin").
-        SearchAnd("u.email", "@company.com").
+        LikeOr("u.name", "John", "Jane", "Admin").
+        LikeAnd("u.email", "@company.com").
         OrderBy("d.name").
         OrderBy("u.name").
         OrderByDesc("u.created_at").
@@ -404,11 +404,11 @@ func searchFromJSON(w http.ResponseWriter, r *http.Request) {
         "limit": 20,
         "search": "john",
         "search_fields": ["name", "email"],
-        "equals_or": {
+        "eqor": {
             "status": ["active", "pending"],
             "role": ["admin", "manager"]
         },
-        "search_or": {
+        "likeor": {
             "name": ["John", "Jane"],
             "email": ["@company.com", "@gmail.com"]
         },

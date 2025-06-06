@@ -6,7 +6,7 @@ Esta funcionalidade permite fazer bind de query parameters de URLs para structs 
 
 - ✅ Bind de parâmetros básicos (page, limit, search, etc.)
 - ✅ Suporte a arrays e slices
-- ✅ Parâmetros complexos com sintaxe de array (`search_or[field]`, `equals_or[field]`, etc.)
+- ✅ Parâmetros complexos com sintaxe de array (`likeor[field]`, `eqor[field]`, etc.)
 - ✅ Conversão automática de tipos (int, bool, string)
 - ✅ Suporte a structs customizadas
 - ✅ Validação de tipos
@@ -86,10 +86,10 @@ func handler() {
 
 | Parâmetro           | Tipo                | Descrição           | Exemplo                                              |
 | ------------------- | ------------------- | ------------------- | ---------------------------------------------------- |
-| `search_or[field]`  | map[string][]string | Busca OR por campo  | `search_or[status]=active&search_or[status]=pending` |
-| `search_and[field]` | map[string][]string | Busca AND por campo | `search_and[name]=john`                              |
-| `equals_or[field]`  | map[string][]any    | Igualdade OR        | `equals_or[age]=25&equals_or[age]=30`                |
-| `equals_and[field]` | map[string][]any    | Igualdade AND       | `equals_and[role]=admin`                             |
+| `likeor[field]`     | map[string][]string | Busca OR por campo  | `likeor[status]=active&likeor[status]=pending`       |
+| `likeand[field]`    | map[string][]string | Busca AND por campo | `likeand[name]=john`                                 |
+| `eqor[field]`       | map[string][]any    | Igualdade OR        | `eqor[age]=25&eqor[age]=30`                          |
+| `eqand[field]`      | map[string][]any    | Igualdade AND       | `eqand[role]=admin`                                  |
 | `gte[field]`        | map[string]any      | Maior ou igual      | `gte[age]=18`                                        |
 | `gt[field]`         | map[string]any      | Maior que           | `gt[score]=80`                                       |
 | `lte[field]`        | map[string]any      | Menor ou igual      | `lte[price]=100.50`                                  |
@@ -100,12 +100,12 @@ func handler() {
 ### 1. Parâmetros Complexos
 
 ```go
-queryString := "page=1&search_or[status]=active&search_or[status]=pending&equals_or[age]=25&equals_or[age]=30&gte[created_at]=2023-01-01"
+queryString := "page=1&likeor[status]=active&likeor[status]=pending&eqor[age]=25&eqor[age]=30&gte[created_at]=2023-01-01"
 params, err := paginate.BindQueryStringToStruct(queryString)
 
 // Resultado:
-// params.SearchOr["status"] = ["active", "pending"]
-// params.EqualsOr["age"] = [25, 30]
+// params.LikeOr["status"] = ["active", "pending"]
+// params.EqOr["age"] = [25, 30]
 // params.Gte["created_at"] = "2023-01-01"
 ```
 
