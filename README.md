@@ -1035,15 +1035,19 @@ Clone the repository and run the examples:
 
 ```bash
 git clone https://github.com/booscaaa/go-paginate.git
-cd go-paginate/v3
+cd go-paginate
 
-# Install dependencies
-go mod tidy
+# Run examples from the examples folder
+cd examples/builder && go run main.go     # Fluent API examples
+cd ../bind && go run main.go              # HTTP binding examples  
+cd ../debug && go run main.go             # Debug mode examples
+cd ../v2 && go run main.go                # Traditional API examples
 
-# Run examples
-go run example_builder.go     # Fluent API examples
-go run example_bind.go        # HTTP binding examples
-go run example_usage.go       # Traditional API examples
+# Or run from project root
+go run examples/builder/main.go           # Fluent API examples
+go run examples/bind/main.go              # HTTP binding examples
+go run examples/debug/main.go             # Debug mode examples
+go run examples/v2/main.go                # Traditional API examples
 ```
 
 ---
