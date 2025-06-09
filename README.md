@@ -43,6 +43,21 @@ go get github.com/booscaaa/go-paginate/v3
 
 **Requirements**: Go 1.24.2+
 
+### 🔧 Client Library
+
+Go Paginate v3 also includes a **client library** that allows other Go applications to easily generate query string parameters compatible with go-paginate:
+
+```go
+import "github.com/booscaaa/go-paginate/v3/client"
+
+// Create a client and build URLs with pagination parameters
+c := client.New("https://api.example.com/users")
+url := c.Page(2).Limit(25).Search("john").BuildURL()
+// Result: https://api.example.com/users?limit=25&page=2&search=john
+```
+
+📖 **[Complete Client Documentation](v3/CLIENT_README.md)**
+
 ---
 
 ## 🚀 Quick Start - Advanced Example
