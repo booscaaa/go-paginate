@@ -134,6 +134,31 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 			// Converter os valores para o tipo correto
 			var mapValue reflect.Value
 			switch valueType.Kind() {
+			case reflect.Array:
+				// Para arrays fixos como [2]any (usado em Between)
+				if valueType.Len() == 2 && len(values) >= 2 {
+					arrayValue := reflect.New(valueType).Elem()
+					for i := 0; i < 2 && i < len(values); i++ {
+						value := values[i]
+						var elem reflect.Value
+						if valueType.Elem().Kind() == reflect.Interface {
+							// Try to convert to number first, then boolean, otherwise keep as string
+							if intVal, err := strconv.Atoi(value); err == nil {
+								elem = reflect.ValueOf(intVal)
+							} else if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
+								elem = reflect.ValueOf(floatVal)
+							} else if boolVal, err := strconv.ParseBool(value); err == nil {
+								elem = reflect.ValueOf(boolVal)
+							} else {
+								elem = reflect.ValueOf(value)
+							}
+						} else {
+							elem = reflect.ValueOf(value)
+						}
+						arrayValue.Index(i).Set(elem)
+					}
+					mapValue = arrayValue
+				}
 			case reflect.Slice:
 				// Para []string ou []any
 				sliceType := valueType.Elem()
@@ -141,11 +166,13 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 				for _, value := range values {
 					var elem reflect.Value
 					if sliceType.Kind() == reflect.Interface {
-						// Try to convert to number, otherwise keep as string
+						// Try to convert to number first, then boolean, otherwise keep as string
 						if intVal, err := strconv.Atoi(value); err == nil {
 							elem = reflect.ValueOf(intVal)
 						} else if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
 							elem = reflect.ValueOf(floatVal)
+						} else if boolVal, err := strconv.ParseBool(value); err == nil {
+							elem = reflect.ValueOf(boolVal)
 						} else {
 							elem = reflect.ValueOf(value)
 						}
@@ -159,11 +186,13 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 				// Para any, usar o primeiro valor
 				if len(values) > 0 {
 					value := values[0]
-					// Try to convert to number, otherwise keep as string
+					// Try to convert to number first, then boolean, otherwise keep as string
 					if intVal, err := strconv.Atoi(value); err == nil {
 						mapValue = reflect.ValueOf(intVal)
 					} else if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
 						mapValue = reflect.ValueOf(floatVal)
+					} else if boolVal, err := strconv.ParseBool(value); err == nil {
+						mapValue = reflect.ValueOf(boolVal)
 					} else {
 						mapValue = reflect.ValueOf(value)
 					}
@@ -256,16 +285,23 @@ func BindQueryStringToStruct(queryString string) (*PaginationParams, error) {
 // NewPaginationParams cria uma nova instância com valores padrão globais
 func NewPaginationParams() *PaginationParams {
 	return &PaginationParams{
-		Page:    1,
-		Limit:   GetDefaultLimit(), // Use global default
-		LikeOr:  make(map[string][]string),
-		LikeAnd: make(map[string][]string),
-		EqOr:    make(map[string][]any),
-		EqAnd:   make(map[string][]any),
-		Gte:     make(map[string]any),
-		Gt:      make(map[string]any),
-		Lte:     make(map[string]any),
-		Lt:      make(map[string]any),
+		Page:      1,
+		Limit:     GetDefaultLimit(), // Use global default
+		Like:      make(map[string][]string),
+		LikeOr:    make(map[string][]string),
+		LikeAnd:   make(map[string][]string),
+		Eq:        make(map[string][]any),
+		EqOr:      make(map[string][]any),
+		EqAnd:     make(map[string][]any),
+		Gte:       make(map[string]any),
+		Gt:        make(map[string]any),
+		Lte:       make(map[string]any),
+		Lt:        make(map[string]any),
+		In:        make(map[string][]any),
+		NotIn:     make(map[string][]any),
+		Between:   make(map[string][2]any),
+		IsNull:    make([]string, 0),
+		IsNotNull: make([]string, 0),
 	}
 }
 

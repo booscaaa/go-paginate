@@ -197,6 +197,42 @@ func (b *PaginatorBuilder) EqAnd(field string, values ...any) *PaginatorBuilder 
 	return b
 }
 
+// Eq adds equality conditions to the Eq field
+func (b *PaginatorBuilder) Eq(field string, values ...any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.Eq == nil {
+		b.params.Eq = make(map[string][]any)
+	}
+	b.params.Eq[field] = append(b.params.Eq[field], values...)
+	return b
+}
+
+// In adds IN conditions to the In field
+func (b *PaginatorBuilder) In(field string, values ...any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.In == nil {
+		b.params.In = make(map[string][]any)
+	}
+	b.params.In[field] = append(b.params.In[field], values...)
+	return b
+}
+
+// NotIn adds NOT IN conditions to the NotIn field
+func (b *PaginatorBuilder) NotIn(field string, values ...any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.NotIn == nil {
+		b.params.NotIn = make(map[string][]any)
+	}
+	b.params.NotIn[field] = append(b.params.NotIn[field], values...)
+	return b
+}
+
 // WhereEqualsOr is deprecated, use EqOr instead
 func (b *PaginatorBuilder) WhereEqualsOr(field string, values ...any) *PaginatorBuilder {
 	return b.EqOr(field, values...)
@@ -573,6 +609,114 @@ func (b *PaginatorBuilder) fromMap(data map[string]any) *PaginatorBuilder {
 				}
 			}
 			break // Only process the first match
+		}
+	}
+
+	// Handle new operators
+	// Handle like
+	if like, ok := data["like"]; ok {
+		if likeMap, ok := like.(map[string]any); ok {
+			for field, values := range likeMap {
+				if valueSlice := toStringSlice(values); len(valueSlice) > 0 {
+					b.WhereLike(field, valueSlice...)
+				}
+			}
+		} else if likeMapStr, ok := like.(map[string][]string); ok {
+			// Handle direct map[string][]string from struct conversion
+			for field, values := range likeMapStr {
+				if len(values) > 0 {
+					b.WhereLike(field, values...)
+				}
+			}
+		}
+	}
+
+	// Handle eq
+	if eq, ok := data["eq"]; ok {
+		if eqMap, ok := eq.(map[string]any); ok {
+			for field, values := range eqMap {
+				if valueSlice := toInterfaceSlice(values); len(valueSlice) > 0 {
+					b.Eq(field, valueSlice...)
+				}
+			}
+		} else if eqMapSlice, ok := eq.(map[string][]any); ok {
+			// Handle direct map[string][]any from struct conversion
+			for field, values := range eqMapSlice {
+				if len(values) > 0 {
+					b.Eq(field, values...)
+				}
+			}
+		}
+	}
+
+	// Handle in
+	if in, ok := data["in"]; ok {
+		if inMap, ok := in.(map[string]any); ok {
+			for field, values := range inMap {
+				if valueSlice := toInterfaceSlice(values); len(valueSlice) > 0 {
+					b.In(field, valueSlice...)
+				}
+			}
+		} else if inMapSlice, ok := in.(map[string][]any); ok {
+			// Handle direct map[string][]any from struct conversion
+			for field, values := range inMapSlice {
+				if len(values) > 0 {
+					b.In(field, values...)
+				}
+			}
+		}
+	}
+
+	// Handle notin
+	if notIn, ok := data["notin"]; ok {
+		if notInMap, ok := notIn.(map[string]any); ok {
+			for field, values := range notInMap {
+				if valueSlice := toInterfaceSlice(values); len(valueSlice) > 0 {
+					b.NotIn(field, valueSlice...)
+				}
+			}
+		} else if notInMapSlice, ok := notIn.(map[string][]any); ok {
+			// Handle direct map[string][]any from struct conversion
+			for field, values := range notInMapSlice {
+				if len(values) > 0 {
+					b.NotIn(field, values...)
+				}
+			}
+		}
+	}
+
+	// Handle between
+	if between, ok := data["between"]; ok {
+		if betweenMap, ok := between.(map[string]any); ok {
+			for field, values := range betweenMap {
+				// Handle array of 2 values [min, max]
+				if valueSlice := toInterfaceSlice(values); len(valueSlice) >= 2 {
+					b.WhereBetween(field, valueSlice[0], valueSlice[1])
+				}
+			}
+		} else if betweenMapArray, ok := between.(map[string][2]any); ok {
+			// Handle direct map[string][2]any from struct conversion
+			for field, values := range betweenMapArray {
+				b.WhereBetween(field, values[0], values[1])
+			}
+		}
+	}
+
+	// Handle isnull
+	if isNull, ok := data["isnull"]; ok {
+		if fields := toStringSlice(isNull); len(fields) > 0 {
+			for _, field := range fields {
+				b.WhereIsNull(field)
+			}
+		}
+	}
+
+	// Handle isnotnull
+	if isNotNull, ok := data["isnotnull"]; ok {
+		if fields := toStringSlice(isNotNull); len(fields) > 0 {
+			for _, field := range fields {
+				b.WhereIsNotNull(field)
+			}
 		}
 	}
 
