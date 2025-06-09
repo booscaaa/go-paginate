@@ -22,14 +22,21 @@ type PaginationParams struct {
 	Columns        []string            `query:"columns"`
 	Vacuum         bool                `query:"vacuum"`
 	NoOffset       bool                `query:"no_offset"`
+	Like           map[string][]string `query:"like"`
 	LikeOr         map[string][]string `query:"likeor"`
 	LikeAnd        map[string][]string `query:"likeand"`
+	Eq             map[string][]any    `query:"eq"`
 	EqOr           map[string][]any    `query:"eqor"`
 	EqAnd          map[string][]any    `query:"eqand"`
 	Gte            map[string]any      `query:"gte"`
 	Gt             map[string]any      `query:"gt"`
 	Lte            map[string]any      `query:"lte"`
 	Lt             map[string]any      `query:"lt"`
+	In             map[string][]any    `query:"in"`
+	NotIn          map[string][]any    `query:"notin"`
+	Between        map[string][2]any   `query:"between"`
+	IsNull         []string            `query:"isnull"`
+	IsNotNull      []string            `query:"isnotnull"`
 }
 
 // BindQueryParams binds url.Values to a pagination struct

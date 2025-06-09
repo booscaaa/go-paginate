@@ -28,14 +28,21 @@ type QueryParams struct {
 	MapArgs        map[string]any
 	NoOffset       bool
 	// New filter fields
-	LikeOr  map[string][]string
-	LikeAnd map[string][]string
-	EqOr    map[string][]any
-	EqAnd   map[string][]any
-	Gte     map[string]any
-	Gt      map[string]any
-	Lte     map[string]any
-	Lt      map[string]any
+	Like       map[string][]string
+	LikeOr     map[string][]string
+	LikeAnd    map[string][]string
+	Eq         map[string][]any
+	EqOr       map[string][]any
+	EqAnd      map[string][]any
+	Gte        map[string]any
+	Gt         map[string]any
+	Lte        map[string]any
+	Lt         map[string]any
+	In         map[string][]any
+	NotIn      map[string][]any
+	Between    map[string][2]any
+	IsNull     []string
+	IsNotNull  []string
 }
 
 // Option is a function that configures options in QueryParams.
@@ -148,6 +155,13 @@ func WithWhereClause(clause string, args ...any) Option {
 	}
 }
 
+// WithLike sets the Like filter.
+func WithLike(like map[string][]string) Option {
+	return func(params *QueryParams) {
+		params.Like = like
+	}
+}
+
 // WithLikeOr sets the LikeOr filter.
 func WithLikeOr(likeOr map[string][]string) Option {
 	return func(params *QueryParams) {
@@ -159,6 +173,13 @@ func WithLikeOr(likeOr map[string][]string) Option {
 func WithLikeAnd(likeAnd map[string][]string) Option {
 	return func(params *QueryParams) {
 		params.LikeAnd = likeAnd
+	}
+}
+
+// WithEq sets the Eq filter.
+func WithEq(eq map[string][]any) Option {
+	return func(params *QueryParams) {
+		params.Eq = eq
 	}
 }
 
@@ -221,6 +242,41 @@ func WithLte(lte map[string]any) Option {
 func WithLt(lt map[string]any) Option {
 	return func(params *QueryParams) {
 		params.Lt = lt
+	}
+}
+
+// WithIn sets the In filter.
+func WithIn(in map[string][]any) Option {
+	return func(params *QueryParams) {
+		params.In = in
+	}
+}
+
+// WithNotIn sets the NotIn filter.
+func WithNotIn(notIn map[string][]any) Option {
+	return func(params *QueryParams) {
+		params.NotIn = notIn
+	}
+}
+
+// WithBetween sets the Between filter.
+func WithBetween(between map[string][2]any) Option {
+	return func(params *QueryParams) {
+		params.Between = between
+	}
+}
+
+// WithIsNull sets the IsNull filter.
+func WithIsNull(isNull []string) Option {
+	return func(params *QueryParams) {
+		params.IsNull = isNull
+	}
+}
+
+// WithIsNotNull sets the IsNotNull filter.
+func WithIsNotNull(isNotNull []string) Option {
+	return func(params *QueryParams) {
+		params.IsNotNull = isNotNull
 	}
 }
 
@@ -384,6 +440,21 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 		}
 	}
 
+	// Like conditions
+	if len(params.Like) > 0 {
+		for field, values := range params.Like {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" && len(values) > 0 {
+				var searchConditions []string
+				for _, value := range values {
+					searchConditions = append(searchConditions, fmt.Sprintf("%s::TEXT ILIKE ?", columnName))
+					args = append(args, "%"+value+"%")
+				}
+				whereClauses = append(whereClauses, "("+strings.Join(searchConditions, " OR ")+")")
+			}
+		}
+	}
+
 	// LikeOr conditions
 	if len(params.LikeOr) > 0 {
 		for field, values := range params.LikeOr {
@@ -410,6 +481,21 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 					args = append(args, "%"+value+"%")
 				}
 				whereClauses = append(whereClauses, "("+strings.Join(searchConditions, " AND ")+")")
+			}
+		}
+	}
+
+	// Eq conditions
+	if len(params.Eq) > 0 {
+		for field, values := range params.Eq {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" && len(values) > 0 {
+				var equalsConditions []string
+				for _, value := range values {
+					equalsConditions = append(equalsConditions, fmt.Sprintf("%s = ?", columnName))
+					args = append(args, value)
+				}
+				whereClauses = append(whereClauses, "("+strings.Join(equalsConditions, " OR ")+")")
 			}
 		}
 	}
@@ -484,6 +570,67 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 			if columnName != "" {
 				whereClauses = append(whereClauses, fmt.Sprintf("%s < ?", columnName))
 				args = append(args, value)
+			}
+		}
+	}
+
+	// In conditions
+	if len(params.In) > 0 {
+		for field, values := range params.In {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" && len(values) > 0 {
+				placeholders := make([]string, len(values))
+				for i := range values {
+					placeholders[i] = "?"
+					args = append(args, values[i])
+				}
+				whereClauses = append(whereClauses, fmt.Sprintf("%s IN (%s)", columnName, strings.Join(placeholders, ", ")))
+			}
+		}
+	}
+
+	// NotIn conditions
+	if len(params.NotIn) > 0 {
+		for field, values := range params.NotIn {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" && len(values) > 0 {
+				placeholders := make([]string, len(values))
+				for i := range values {
+					placeholders[i] = "?"
+					args = append(args, values[i])
+				}
+				whereClauses = append(whereClauses, fmt.Sprintf("%s NOT IN (%s)", columnName, strings.Join(placeholders, ", ")))
+			}
+		}
+	}
+
+	// Between conditions
+	if len(params.Between) > 0 {
+		for field, values := range params.Between {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s BETWEEN ? AND ?", columnName))
+				args = append(args, values[0], values[1])
+			}
+		}
+	}
+
+	// IsNull conditions
+	if len(params.IsNull) > 0 {
+		for _, field := range params.IsNull {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s IS NULL", columnName))
+			}
+		}
+	}
+
+	// IsNotNull conditions
+	if len(params.IsNotNull) > 0 {
+		for _, field := range params.IsNotNull {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				whereClauses = append(whereClauses, fmt.Sprintf("%s IS NOT NULL", columnName))
 			}
 		}
 	}

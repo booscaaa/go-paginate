@@ -257,8 +257,59 @@ func (b *PaginatorBuilder) WhereLessThanOrEqual(field string, value any) *Pagina
 
 // WhereBetween adds BETWEEN conditions
 func (b *PaginatorBuilder) WhereBetween(field string, min, max any) *PaginatorBuilder {
-	return b.WhereGreaterThanOrEqual(field, min).WhereLessThanOrEqual(field, max)
+	if b.err != nil {
+		return b
+	}
+	if b.params.Between == nil {
+		b.params.Between = make(map[string][2]any)
+	}
+	b.params.Between[field] = [2]any{min, max}
+	return b
 }
+
+// WhereNotIn adds NOT IN conditions
+func (b *PaginatorBuilder) WhereNotIn(field string, values ...any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.NotIn == nil {
+		b.params.NotIn = make(map[string][]any)
+	}
+	b.params.NotIn[field] = values
+	return b
+}
+
+// WhereIsNull adds IS NULL conditions
+func (b *PaginatorBuilder) WhereIsNull(field string) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.params.IsNull = append(b.params.IsNull, field)
+	return b
+}
+
+// WhereIsNotNull adds IS NOT NULL conditions
+func (b *PaginatorBuilder) WhereIsNotNull(field string) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.params.IsNotNull = append(b.params.IsNotNull, field)
+	return b
+}
+
+// WhereLike adds LIKE conditions
+func (b *PaginatorBuilder) WhereLike(field string, values ...string) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.Like == nil {
+		b.params.Like = make(map[string][]string)
+	}
+	b.params.Like[field] = values
+	return b
+}
+
+
 
 // OrderBy adds sorting
 func (b *PaginatorBuilder) OrderBy(column string, direction ...string) *PaginatorBuilder {

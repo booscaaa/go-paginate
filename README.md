@@ -23,7 +23,7 @@ Go Paginate v3 is the **most powerful and flexible** Go pagination library avail
 ### ✨ Key Features
 
 - 🚀 **3 Powerful APIs**: Fluent Builder, Automatic Binding, Traditional
-- 🔍 **Advanced Filtering**: 15+ filter types including LikeOr, LikeAnd, EqOr, EqAnd, Gte, Gt, Lte, Lt
+- 🔍 **Advanced Filtering**: 22+ filter types including Like, Eq, In, NotIn, Between, IsNull, IsNotNull, LikeOr, LikeAnd, EqOr, EqAnd, Gte, Gt, Lte, Lt
 - 🔗 **Automatic HTTP Binding**: Convert query parameters to structs automatically
 - 📊 **Complex Joins**: Full support for INNER, LEFT, RIGHT JOINs
 - 🎯 **Type Safety**: Compile-time validation and runtime type checking
@@ -622,13 +622,17 @@ countSQL, countArgs := p.GenerateCountQuery()
 | --------------------------- | ----------------------------- | ---------------------------------------- |
 | `Search(term, fields...)`   | Search across multiple fields | `Search("john", "name", "email")`        |
 | `WhereEquals(field, value)` | Exact match                   | `WhereEquals("status", "active")`        |
+| `WhereLike(field, value)`   | LIKE pattern matching         | `WhereLike("name", "john%")`             |
 | `Where(clause, args...)`    | Custom WHERE clause           | `Where("age BETWEEN $1 AND $2", 18, 65)` |
 
 ### Advanced Equality Filters
 
-| Method                            | Description | Example                                        |
-| --------------------------------- | ----------- | ---------------------------------------------- |
-| `WhereIn(field, values...)`       | IN clause   | `WhereIn("role", "admin", "manager")`          |
+| Method                            | Description     | Example                                        |
+| --------------------------------- | --------------- | ---------------------------------------------- |
+| `WhereIn(field, values...)`       | IN clause       | `WhereIn("role", "admin", "manager")`          |
+| `WhereNotIn(field, values...)`    | NOT IN clause   | `WhereNotIn("status", "deleted", "banned")`   |
+| `WhereIsNull(field)`              | IS NULL check   | `WhereIsNull("deleted_at")`                   |
+| `WhereIsNotNull(field)`           | IS NOT NULL     | `WhereIsNotNull("email")`                     |
 | `WhereEqOr(field, values...)` | OR equality | `WhereEqOr("status", "active", "pending")` |
 
 ### Comparison Filters
@@ -704,6 +708,13 @@ countSQL, countArgs := p.GenerateCountQuery()
 
 | Parameter           | Type                | Description           | Example                                               |
 | ------------------- | ------------------- | --------------------- | ----------------------------------------------------- |
+| `like[field]`       | map[string][]string | Simple LIKE search    | `?like[name]=john&like[name]=jane`                    |
+| `eq[field]`         | map[string][]any    | Simple equality       | `?eq[status]=active&eq[status]=pending`               |
+| `in[field]`         | map[string][]any    | IN clause             | `?in[age]=25&in[age]=30&in[age]=35`                   |
+| `notin[field]`      | map[string][]any    | NOT IN clause         | `?notin[status]=deleted&notin[status]=banned`         |
+| `between[field]`    | map[string][2]any   | BETWEEN clause        | `?between[age][0]=18&between[age][1]=65`              |
+| `isnull[field]`     | []string            | IS NULL check         | `?isnull=deleted_at&isnull=archived_at`               |
+| `isnotnull[field]`  | []string            | IS NOT NULL check     | `?isnotnull=email&isnotnull=phone`                    |
 | `likeor[field]`     | map[string][]string | OR search             | `?likeor[status]=active&likeor[status]=pending`       |
 | `likeand[field]`    | map[string][]string | AND search            | `?likeand[name]=admin`                                |
 | `eqor[field]`       | map[string][]any    | OR equality           | `?eqor[age]=25&eqor[age]=30`                          |
