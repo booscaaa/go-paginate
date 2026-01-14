@@ -23,7 +23,7 @@ Go Paginate v3 is the **most powerful and flexible** Go pagination library avail
 ### ✨ Key Features
 
 - 🚀 **3 Powerful APIs**: Fluent Builder, Automatic Binding, Traditional
-- 🔍 **Advanced Filtering**: 22+ filter types including Like, Eq, In, NotIn, Between, IsNull, IsNotNull, LikeOr, LikeAnd, EqOr, EqAnd, Gte, Gt, Lte, Lt
+- 🔍 **Advanced Filtering**: 30+ filter types including Like, Eq, In, NotIn, Between, IsNull, IsNotNull, LikeOr, LikeAnd, EqOr, EqAnd, Gte, Gt, Lte, Lt and their **Granular OR Grouping** counterparts (`GteOr`, `GtOr`, `LteOr`, `LtOr`, `InOr`, `NotInOr`, `IsNullOr`, `IsNotNullOr`)
 - 🔗 **Automatic HTTP Binding**: Convert query parameters to structs automatically
 - 📊 **Complex Joins**: Full support for INNER, LEFT, RIGHT JOINs
 - 🎯 **Type Safety**: Compile-time validation and runtime type checking
@@ -166,13 +166,13 @@ func complexFluentExample() {
     fmt.Printf("   Args: %v\n", args)
 
     // Output:
-    // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, 
-    // u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id 
-    // LEFT JOIN user_profiles p ON u.id = p.user_id WHERE (u.name ILIKE $1 OR u.email ILIKE $2) 
-    // AND (u.status ILIKE $3 OR u.status ILIKE $4 OR u.status ILIKE $5) AND (u.email ILIKE $6) 
-    // AND u.is_active = $7 AND u.dept_id IN ($8, $9, $10, $11) AND u.age > $12 AND u.salary <= $13 
+    // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at,
+    // u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id
+    // LEFT JOIN user_profiles p ON u.id = p.user_id WHERE (u.name ILIKE $1 OR u.email ILIKE $2)
+    // AND (u.status ILIKE $3 OR u.status ILIKE $4 OR u.status ILIKE $5) AND (u.email ILIKE $6)
+    // AND u.is_active = $7 AND u.dept_id IN ($8, $9, $10, $11) AND u.age > $12 AND u.salary <= $13
     // AND u.created_at BETWEEN $14 AND $15 ORDER BY d.name ASC, u.salary DESC, u.name ASC LIMIT 25 OFFSET 25
-    
+
     // Args: [%john% %john% %active% %pending% %verified% %@company.com% true 1 2 3 5 21 150000 2023-01-01 2024-12-31]
 }
 
@@ -230,13 +230,13 @@ func fromJSONExample() {
 
     // Output:
      // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at,
-     //  u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id 
-     // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 
-     // OR u.status ILIKE $6 OR d.name ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9) AND (u.email ILIKE $10) 
-     // AND (u.age = $11 OR u.age = $12 OR u.age = $13 OR u.age = $14 OR u.dept_id = $15 OR u.dept_id = $16 OR u.dept_id = $17) 
-     // AND u.salary >= $18 AND u.age >= $19 AND u.created_at > $20 AND u.salary <= $21 AND u.last_login <= $22 
+     //  u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id
+     // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5
+     // OR u.status ILIKE $6 OR d.name ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9) AND (u.email ILIKE $10)
+     // AND (u.age = $11 OR u.age = $12 OR u.age = $13 OR u.age = $14 OR u.dept_id = $15 OR u.dept_id = $16 OR u.dept_id = $17)
+     // AND u.salary >= $18 AND u.age >= $19 AND u.created_at > $20 AND u.salary <= $21 AND u.last_login <= $22
      // AND u.updated_at < $23 ORDER BY u.salary DESC, d.name ASC, u.created_at DESC LIMIT 50 OFFSET 0
-     
+
      // Args: [%engineer% %engineer% %engineer% %active% %pending% %on_leave% %Engineering% %DevOps% %QA% %@company.com% 25 30 35 40 1 2 3 50000 22 2020-01-01 200000 2024-12-31 2024-12-31]
 }
 
@@ -298,15 +298,15 @@ func fromStructExample() {
     fmt.Printf("   Args: %v\n", args)
 
     // Output:
-     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, 
-     // u.updated_at, u.is_active, u.last_login FROM users u 
-     // INNER JOIN departments d ON u.dept_id = d.id LEFT JOIN user_roles ur ON u.id = ur.user_id 
-     // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 
-     // OR d.name ILIKE $6 OR d.name ILIKE $7 OR d.name ILIKE $8) AND (u.email ILIKE $9) AND (u.age = $10 OR u.age = $11 
-     // OR u.age = $12 OR u.age = $13 OR u.dept_id = $14 OR u.dept_id = $15 OR u.dept_id = $16 OR u.dept_id = $17) 
-     // AND u.is_active = $18 AND u.salary >= $19 AND u.age >= $20 AND u.created_at >= $21 AND u.last_login > $22 
+     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at,
+     // u.updated_at, u.is_active, u.last_login FROM users u
+     // INNER JOIN departments d ON u.dept_id = d.id LEFT JOIN user_roles ur ON u.id = ur.user_id
+     // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5
+     // OR d.name ILIKE $6 OR d.name ILIKE $7 OR d.name ILIKE $8) AND (u.email ILIKE $9) AND (u.age = $10 OR u.age = $11
+     // OR u.age = $12 OR u.age = $13 OR u.dept_id = $14 OR u.dept_id = $15 OR u.dept_id = $16 OR u.dept_id = $17)
+     // AND u.is_active = $18 AND u.salary >= $19 AND u.age >= $20 AND u.created_at >= $21 AND u.last_login > $22
      // AND u.salary <= $23 AND u.updated_at <= $24 AND u.age < $25 ORDER BY u.salary DESC, u.name ASC, u.age DESC LIMIT 30 OFFSET 60
-     
+
      // Args: [%senior% %senior% %senior% %active% %verified% %Engineering% %Product% %Design% %@company.com% 28 32 35 40 1 2 4 7 true 75000 25 2021-01-01 2024-01-01 250000 2024-12-31 60]
 }
 
@@ -356,12 +356,12 @@ func queryStringBindingExample() {
     fmt.Printf("   Direct Bound: %+v\n", directParams)
 
     // Output:
-    // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, 
-    // u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id 
-    // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 OR d.name ILIKE $6) AND (u.email ILIKE $7) AND (u.age = $8 
-    // OR u.age = $9 OR u.age = $10) AND u.is_active = $11 AND u.salary >= $12 AND u.age >= $13 
+    // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at,
+    // u.updated_at, u.is_active, u.last_login FROM users u INNER JOIN departments d ON u.dept_id = d.id
+    // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3) AND (u.status ILIKE $4 OR u.status ILIKE $5 OR d.name ILIKE $6) AND (u.email ILIKE $7) AND (u.age = $8
+    // OR u.age = $9 OR u.age = $10) AND u.is_active = $11 AND u.salary >= $12 AND u.age >= $13
     // AND u.created_at > $14 AND u.salary <= $15 AND u.updated_at < $16 ORDER BY u.salary DESC, d.name ASC, u.created_at DESC LIMIT 40 OFFSET 40
-    
+
     // Args: [%developer% %developer% %developer% %active% %pending% %Engineering% %@company.com% 25 30 35 true 60000 23 2022-01-01 180000 2024-12-31]
 }
 
@@ -464,33 +464,33 @@ func ultimateComplexExample() {
      fmt.Printf("   Count Args: %v\n", countArgs)
 
      // Output:
-     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, 
-     // u.is_active, u.last_login FROM users u 
-     // INNER JOIN departments d ON u.dept_id = d.id INNER JOIN user_roles ur ON u.id = ur.user_id 
-     // INNER JOIN roles r ON ur.role_id = r.id LEFT JOIN user_skills us ON u.id = us.user_id 
-     // LEFT JOIN skills s ON us.skill_id = s.id LEFT JOIN locations l ON u.location_id = l.id 
-     // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4) AND (u.status ILIKE $5 OR u.status ILIKE $6 
-     // OR u.status ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9 OR d.name ILIKE $10 OR d.name ILIKE $11 OR r.name ILIKE $12 
-     // OR r.name ILIKE $13 OR r.name ILIKE $14 OR r.name ILIKE $15) AND (u.email ILIKE $16 AND s.name ILIKE $17 AND s.name ILIKE $18) 
-     // AND (u.experience_level = $19 OR u.experience_level = $20 OR u.experience_level = $21 OR u.team_size = $22 OR u.team_size = $23 
-     // OR u.team_size = $24 OR u.team_size = $25 OR u.location_id = $26 OR u.location_id = $27 OR u.location_id = $28 OR u.location_id = $29 
-     // OR u.location_id = $30) AND u.is_active = $31 AND u.is_verified = $32 AND u.has_security_clearance = $33 AND u.salary >= $34 AND u.age >= $35 
-     // AND u.years_experience >= $36 AND u.team_size >= $37 AND u.created_at >= $38 AND u.performance_score >= $39 AND u.last_promotion_date > $40 
-     // AND u.last_review_score > $41 AND u.salary <= $42 AND u.age <= $43 AND u.updated_at <= $44 AND u.days_since_last_login < $45 
+     // SQL: SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at,
+     // u.is_active, u.last_login FROM users u
+     // INNER JOIN departments d ON u.dept_id = d.id INNER JOIN user_roles ur ON u.id = ur.user_id
+     // INNER JOIN roles r ON ur.role_id = r.id LEFT JOIN user_skills us ON u.id = us.user_id
+     // LEFT JOIN skills s ON us.skill_id = s.id LEFT JOIN locations l ON u.location_id = l.id
+     // WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4) AND (u.status ILIKE $5 OR u.status ILIKE $6
+     // OR u.status ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9 OR d.name ILIKE $10 OR d.name ILIKE $11 OR r.name ILIKE $12
+     // OR r.name ILIKE $13 OR r.name ILIKE $14 OR r.name ILIKE $15) AND (u.email ILIKE $16 AND s.name ILIKE $17 AND s.name ILIKE $18)
+     // AND (u.experience_level = $19 OR u.experience_level = $20 OR u.experience_level = $21 OR u.team_size = $22 OR u.team_size = $23
+     // OR u.team_size = $24 OR u.team_size = $25 OR u.location_id = $26 OR u.location_id = $27 OR u.location_id = $28 OR u.location_id = $29
+     // OR u.location_id = $30) AND u.is_active = $31 AND u.is_verified = $32 AND u.has_security_clearance = $33 AND u.salary >= $34 AND u.age >= $35
+     // AND u.years_experience >= $36 AND u.team_size >= $37 AND u.created_at >= $38 AND u.performance_score >= $39 AND u.last_promotion_date > $40
+     // AND u.last_review_score > $41 AND u.salary <= $42 AND u.age <= $43 AND u.updated_at <= $44 AND u.days_since_last_login < $45
      // AND u.open_tickets < $46 ORDER BY u.salary DESC, u.performance_score DESC, d.name ASC, u.name ASC, u.created_at DESC LIMIT 100 OFFSET 0
-     
+
      // Args: [%tech lead% %tech lead% %tech lead% %tech lead% %active% %verified% %premium% %Engineering% %DevOps% %Architecture% %Platform% %Senior% %Lead% %Principal% %Staff% %@company.com% %golang% %kubernetes% senior lead principal 5 8 12 15 1 2 3 5 8 true true true 120000 28 5 3 2020-01-01 8.5 2022-01-01 4.0 350000 55 2024-12-31 30 5]
 
-     // Count SQL: SELECT COUNT(*) FROM users u INNER JOIN departments d ON u.dept_id = d.id INNER JOIN user_roles ur ON u.id = ur.user_id 
-     // INNER JOIN roles r ON ur.role_id = r.id LEFT JOIN user_skills us ON u.id = us.user_id LEFT JOIN skills s ON us.skill_id = s.id 
-     // LEFT JOIN locations l ON u.location_id = l.id WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4) 
-     // AND (u.status ILIKE $5 OR u.status ILIKE $6 OR u.status ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9 OR d.name ILIKE $10 OR d.name 
-     // ILIKE $11 OR r.name ILIKE $12 OR r.name ILIKE $13 OR r.name ILIKE $14 OR r.name ILIKE $15) AND (u.email ILIKE $16 AND s.name ILIKE $17 
-     // AND s.name ILIKE $18) AND (u.experience_level = $19 OR u.experience_level = $20 OR u.experience_level = $21 OR u.team_size = $22 
-     // OR u.team_size = $23 OR u.team_size = $24 OR u.team_size = $25 OR u.location_id = $26 OR u.location_id = $27 OR u.location_id = $28 
-     // OR u.location_id = $29 OR u.location_id = $30) AND u.is_active = $31 AND u.is_verified = $32 AND u.has_security_clearance = $33 
-     // AND u.salary >= $34 AND u.age >= $35 AND u.years_experience >= $36 AND u.team_size >= $37 AND u.created_at >= $38 
-     // AND u.performance_score >= $39 AND u.last_promotion_date > $40 AND u.last_review_score > $41 AND u.salary <= $42 
+     // Count SQL: SELECT COUNT(*) FROM users u INNER JOIN departments d ON u.dept_id = d.id INNER JOIN user_roles ur ON u.id = ur.user_id
+     // INNER JOIN roles r ON ur.role_id = r.id LEFT JOIN user_skills us ON u.id = us.user_id LEFT JOIN skills s ON us.skill_id = s.id
+     // LEFT JOIN locations l ON u.location_id = l.id WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4)
+     // AND (u.status ILIKE $5 OR u.status ILIKE $6 OR u.status ILIKE $7 OR d.name ILIKE $8 OR d.name ILIKE $9 OR d.name ILIKE $10 OR d.name
+     // ILIKE $11 OR r.name ILIKE $12 OR r.name ILIKE $13 OR r.name ILIKE $14 OR r.name ILIKE $15) AND (u.email ILIKE $16 AND s.name ILIKE $17
+     // AND s.name ILIKE $18) AND (u.experience_level = $19 OR u.experience_level = $20 OR u.experience_level = $21 OR u.team_size = $22
+     // OR u.team_size = $23 OR u.team_size = $24 OR u.team_size = $25 OR u.location_id = $26 OR u.location_id = $27 OR u.location_id = $28
+     // OR u.location_id = $29 OR u.location_id = $30) AND u.is_active = $31 AND u.is_verified = $32 AND u.has_security_clearance = $33
+     // AND u.salary >= $34 AND u.age >= $35 AND u.years_experience >= $36 AND u.team_size >= $37 AND u.created_at >= $38
+     // AND u.performance_score >= $39 AND u.last_promotion_date > $40 AND u.last_review_score > $41 AND u.salary <= $42
      // AND u.age <= $43 AND u.updated_at <= $44 AND u.days_since_last_login < $45 AND u.open_tickets < $46
 
      // Count Args: [%tech lead% %tech lead% %tech lead% %tech lead% %active% %verified% %premium% %Engineering% %DevOps% %Architecture% %Platform% %Senior% %Lead% %Principal% %Staff% %@company.com% %golang% %kubernetes% senior lead principal 5 8 12 15 1 2 3 5 8 true true true 120000 28 5 3 2020-01-01 8.5 2022-01-01 4.0 350000 55 2024-12-31 30 5]
@@ -511,25 +511,26 @@ func ultimateComplexExample() {
 - **🛡️ SQL Safety**: Parameterized queries prevent injection
 
 ### 📈 Output Example:
+
 ```sql
-SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, u.is_active, u.last_login 
-FROM users u 
-INNER JOIN departments d ON u.dept_id = d.id 
-INNER JOIN user_roles ur ON u.id = ur.user_id 
-INNER JOIN roles r ON ur.role_id = r.id 
-LEFT JOIN user_skills us ON u.id = us.user_id 
-LEFT JOIN skills s ON us.skill_id = s.id 
-LEFT JOIN locations l ON u.location_id = l.id 
-WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4) 
-AND (u.status ILIKE $5 OR d.name ILIKE $6 OR r.name ILIKE $7) 
-AND (u.email ILIKE $8 AND s.name ILIKE $9) 
-AND (u.experience_level = $10 OR u.team_size = $11 OR u.location_id = $12) 
-AND u.is_active = $13 AND u.is_verified = $14 AND u.has_security_clearance = $15 
-AND u.salary >= $16 AND u.age >= $17 AND u.years_experience >= $18 
-AND u.last_promotion_date > $19 AND u.last_review_score > $20 
-AND u.salary <= $21 AND u.age <= $22 AND u.updated_at <= $23 
-AND u.days_since_last_login < $24 AND u.open_tickets < $25 
-ORDER BY u.salary DESC, u.performance_score DESC, d.name ASC, u.name ASC, u.created_at DESC 
+SELECT u.id, u.name, u.email, u.age, u.status, u.salary, u.dept_id, d.name, u.created_at, u.updated_at, u.is_active, u.last_login
+FROM users u
+INNER JOIN departments d ON u.dept_id = d.id
+INNER JOIN user_roles ur ON u.id = ur.user_id
+INNER JOIN roles r ON ur.role_id = r.id
+LEFT JOIN user_skills us ON u.id = us.user_id
+LEFT JOIN skills s ON us.skill_id = s.id
+LEFT JOIN locations l ON u.location_id = l.id
+WHERE (u.name ILIKE $1 OR u.email ILIKE $2 OR d.name ILIKE $3 OR r.name ILIKE $4)
+AND (u.status ILIKE $5 OR d.name ILIKE $6 OR r.name ILIKE $7)
+AND (u.email ILIKE $8 AND s.name ILIKE $9)
+AND (u.experience_level = $10 OR u.team_size = $11 OR u.location_id = $12)
+AND u.is_active = $13 AND u.is_verified = $14 AND u.has_security_clearance = $15
+AND u.salary >= $16 AND u.age >= $17 AND u.years_experience >= $18
+AND u.last_promotion_date > $19 AND u.last_review_score > $20
+AND u.salary <= $21 AND u.age <= $22 AND u.updated_at <= $23
+AND u.days_since_last_login < $24 AND u.open_tickets < $25
+ORDER BY u.salary DESC, u.performance_score DESC, d.name ASC, u.name ASC, u.created_at DESC
 LIMIT 100 OFFSET 0
 ```
 
@@ -642,30 +643,31 @@ countSQL, countArgs := p.GenerateCountQuery()
 
 ### Advanced Equality Filters
 
-| Method                            | Description     | Example                                        |
-| --------------------------------- | --------------- | ---------------------------------------------- |
-| `WhereIn(field, values...)`       | IN clause       | `WhereIn("role", "admin", "manager")`          |
-| `WhereNotIn(field, values...)`    | NOT IN clause   | `WhereNotIn("status", "deleted", "banned")`   |
-| `WhereIsNull(field)`              | IS NULL check   | `WhereIsNull("deleted_at")`                   |
-| `WhereIsNotNull(field)`           | IS NOT NULL     | `WhereIsNotNull("email")`                     |
-| `WhereEqOr(field, values...)` | OR equality | `WhereEqOr("status", "active", "pending")` |
+| Method                        | Description      | Example                                    |
+| ----------------------------- | ---------------- | ------------------------------------------ |
+| `WhereIsNotNull(field)`       | IS NOT NULL      | `WhereIsNotNull("email")`                  |
+| `WhereEqOr(field, values...)` | OR equality      | `WhereEqOr("status", "active", "pending")` |
+| `WhereIsNullOr(field)`        | OR IS NULL check | `WhereIsNullOr("deleted_at")`              |
+| `WhereIsNotNullOr(field)`     | OR IS NOT NULL   | `WhereIsNotNullOr("email")`                |
+| `InOr(field, values...)`      | OR IN clause     | `InOr("role", "admin", "manager")`         |
+| `NotInOr(field, values...)`   | OR NOT IN clause | `NotInOr("status", "deleted", "banned")`   |
 
 ### Comparison Filters
 
-| Method                                  | Description                | Example                                                  |
-| --------------------------------------- | -------------------------- | -------------------------------------------------------- |
-| `WhereGreaterThan(field, value)`        | Greater than (>)           | `WhereGreaterThan("age", 18)`                            |
-| `WhereGreaterThanOrEqual(field, value)` | Greater than or equal (>=) | `WhereGreaterThanOrEqual("salary", 50000)`               |
-| `WhereLessThan(field, value)`           | Less than (<)              | `WhereLessThan("age", 65)`                               |
-| `WhereLessThanOrEqual(field, value)`    | Less than or equal (<=)    | `WhereLessThanOrEqual("price", 100)`                     |
-| `WhereBetween(field, min, max)`         | Between values             | `WhereBetween("created_at", "2023-01-01", "2023-12-31")` |
+| Method                          | Description              | Example                                                  |
+| ------------------------------- | ------------------------ | -------------------------------------------------------- |
+| `WhereBetween(field, min, max)` | Between values           | `WhereBetween("created_at", "2023-01-01", "2023-12-31")` |
+| `GteOr(field, value)`           | OR Greater than or equal | `GteOr("salary", 50000)`                                 |
+| `GtOr(field, value)`            | OR Greater than          | `GtOr("age", 18)`                                        |
+| `LteOr(field, value)`           | OR Less than or equal    | `LteOr("price", 100)`                                    |
+| `LtOr(field, value)`            | OR Less than             | `LtOr("age", 65)`                                        |
 
 ### Search Filters
 
-| Method                        | Description           | Example                              |
-| ----------------------------- | --------------------- | ------------------------------------ |
-| `LikeOr(field, values...)`  | Search with OR logic  | `LikeOr("name", "John", "Jane")`   |
-| `LikeAnd(field, values...)` | Search with AND logic | `LikeAnd("email", "@company.com")` |
+| Method                      | Description                    | Example                            |
+| --------------------------- | ------------------------------ | ---------------------------------- |
+| `LikeOr(field, values...)`  | Search with OR logic (Grouped) | `LikeOr("name", "John", "Jane")`   |
+| `LikeAnd(field, values...)` | Search with AND logic          | `LikeAnd("email", "@company.com")` |
 
 ### Join Operations
 
@@ -721,23 +723,45 @@ countSQL, countArgs := p.GenerateCountQuery()
 
 ### Advanced Filters
 
-| Parameter           | Type                | Description           | Example                                               |
-| ------------------- | ------------------- | --------------------- | ----------------------------------------------------- |
-| `like[field]`       | map[string][]string | Simple LIKE search    | `?like[name]=john&like[name]=jane`                    |
-| `eq[field]`         | map[string][]any    | Simple equality       | `?eq[status]=active&eq[status]=pending`               |
-| `in[field]`         | map[string][]any    | IN clause             | `?in[age]=25&in[age]=30&in[age]=35`                   |
-| `notin[field]`      | map[string][]any    | NOT IN clause         | `?notin[status]=deleted&notin[status]=banned`         |
-| `between[field]`    | map[string][2]any   | BETWEEN clause        | `?between[age][0]=18&between[age][1]=65`              |
-| `isnull[field]`     | []string            | IS NULL check         | `?isnull=deleted_at&isnull=archived_at`               |
-| `isnotnull[field]`  | []string            | IS NOT NULL check     | `?isnotnull=email&isnotnull=phone`                    |
-| `likeor[field]`     | map[string][]string | OR search             | `?likeor[status]=active&likeor[status]=pending`       |
-| `likeand[field]`    | map[string][]string | AND search            | `?likeand[name]=admin`                                |
-| `eqor[field]`       | map[string][]any    | OR equality           | `?eqor[age]=25&eqor[age]=30`                          |
-| `eqand[field]`      | map[string][]any    | AND equality          | `?eqand[role]=admin`                                  |
-| `gte[field]`        | map[string]any      | Greater than or equal | `?gte[age]=18`                                        |
-| `gt[field]`         | map[string]any      | Greater than          | `?gt[score]=80`                                       |
-| `lte[field]`        | map[string]any      | Less than or equal    | `?lte[price]=100.50`                                  |
-| `lt[field]`         | map[string]any      | Less than             | `?lt[date]=2023-12-31`                                |
+| Parameter            | Type                | Description              | Example                                         |
+| -------------------- | ------------------- | ------------------------ | ----------------------------------------------- |
+| `like[field]`        | map[string][]string | Simple LIKE search       | `?like[name]=john&like[name]=jane`              |
+| `eq[field]`          | map[string][]any    | Simple equality          | `?eq[status]=active&eq[status]=pending`         |
+| `in[field]`          | map[string][]any    | IN clause                | `?in[age]=25&in[age]=30&in[age]=35`             |
+| `notin[field]`       | map[string][]any    | NOT IN clause            | `?notin[status]=deleted&notin[status]=banned`   |
+| `between[field]`     | map[string][2]any   | BETWEEN clause           | `?between[age][0]=18&between[age][1]=65`        |
+| `isnull[field]`      | []string            | IS NULL check            | `?isnull=deleted_at&isnull=archived_at`         |
+| `isnotnull[field]`   | []string            | IS NOT NULL check        | `?isnotnull=email&isnotnull=phone`              |
+| `likeor[field]`      | map[string][]string | OR search                | `?likeor[status]=active&likeor[status]=pending` |
+| `likeand[field]`     | map[string][]string | AND search               | `?likeand[name]=admin`                          |
+| `eqor[field]`        | map[string][]any    | OR equality              | `?eqor[age]=25&eqor[age]=30`                    |
+| `eqand[field]`       | map[string][]any    | AND equality             | `?eqand[role]=admin`                            |
+| `gte[field]`         | map[string]any      | Greater than or equal    | `?gte[age]=18`                                  |
+| `gt[field]`          | map[string]any      | Greater than             | `?gt[score]=80`                                 |
+| `lte[field]`         | map[string]any      | Less than or equal       | `?lte[price]=100.50`                            |
+| `lt[field]`          | map[string]any      | Less than                | `?lt[date]=2023-12-31`                          |
+| `gteor[field]`       | map[string]any      | OR Greater than or equal | `?gteor[age]=18`                                |
+| `gtor[field]`        | map[string]any      | OR Greater than          | `?gtor[score]=80`                               |
+| `lteor[field]`       | map[string]any      | OR Less than or equal    | `?lteor[price]=100.50`                          |
+| `ltor[field]`        | map[string]any      | OR Less than             | `?ltor[date]=2023-12-31`                        |
+| `inor[field]`        | map[string][]any    | OR IN clause             | `?inor[age]=25&inor[age]=30`                    |
+| `notinor[field]`     | map[string][]any    | OR NOT IN clause         | `?notinor[status]=deleted`                      |
+| `isnullor[field]`    | []string            | OR IS NULL check         | `?isnullor=deleted_at`                          |
+| `isnotnullor[field]` | []string            | OR IS NOT NULL check     | `?isnotnullor=email`                            |
+
+### 🧠 Granular AND/OR Grouping (v3 New!)
+
+Go Paginate v3 introduces powerful granular control over `AND`/`OR` logic. All operators that end with the `or` suffix are automatically grouped into a single parenthesized `OR` block, while other operators remain in the `AND` chain.
+
+**URL Example:**
+`?eqor[status]=active&eqor[name]=john&gte[age]=18&sort=name`
+
+**Generated SQL Logic:**
+`WHERE (status = $1 OR name = $2) AND age >= $3 ORDER BY name ASC`
+
+This works for **ALL** operator types:
+
+- `eqor`, `likeor`, `gteor`, `gtor`, `lteor`, `ltor`, `inor`, `notinor`, `isnullor`, `isnotnullor`
 
 ---
 
@@ -1065,7 +1089,7 @@ cd go-paginate
 
 # Run examples from the examples folder
 cd examples/builder && go run main.go     # Fluent API examples
-cd ../bind && go run main.go              # HTTP binding examples  
+cd ../bind && go run main.go              # HTTP binding examples
 cd ../debug && go run main.go             # Debug mode examples
 cd ../v2 && go run main.go                # Traditional API examples
 
@@ -1196,7 +1220,7 @@ Contributions are very welcome! Here's how you can help:
 
 ```bash
 # Fork and clone the repository
-git clone https://github.com/YOUR_USERNAME/go-paginate.git
+git clone https://github.com/booscaaa/go-paginate.git
 cd go-paginate/v3
 
 # Install dependencies
@@ -1276,7 +1300,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
 
 <p align="center">
   <a href="#-why-go-paginate-v3">⬆️ Back to top</a>
