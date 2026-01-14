@@ -333,6 +333,96 @@ func (b *PaginatorBuilder) WhereIsNotNull(field string) *PaginatorBuilder {
 	return b
 }
 
+// WhereIsNullOr adds IS NULL conditions to the OR group
+func (b *PaginatorBuilder) WhereIsNullOr(field string) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.params.IsNullOr = append(b.params.IsNullOr, field)
+	return b
+}
+
+// WhereIsNotNullOr adds IS NOT NULL conditions to the OR group
+func (b *PaginatorBuilder) WhereIsNotNullOr(field string) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.params.IsNotNullOr = append(b.params.IsNotNullOr, field)
+	return b
+}
+
+// GteOr adds greater than or equal conditions to the OR group
+func (b *PaginatorBuilder) GteOr(field string, value any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.GteOr == nil {
+		b.params.GteOr = make(map[string]any)
+	}
+	b.params.GteOr[field] = value
+	return b
+}
+
+// GtOr adds greater than conditions to the OR group
+func (b *PaginatorBuilder) GtOr(field string, value any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.GtOr == nil {
+		b.params.GtOr = make(map[string]any)
+	}
+	b.params.GtOr[field] = value
+	return b
+}
+
+// LteOr adds less than or equal conditions to the OR group
+func (b *PaginatorBuilder) LteOr(field string, value any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.LteOr == nil {
+		b.params.LteOr = make(map[string]any)
+	}
+	b.params.LteOr[field] = value
+	return b
+}
+
+// LtOr adds less than conditions to the OR group
+func (b *PaginatorBuilder) LtOr(field string, value any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.LtOr == nil {
+		b.params.LtOr = make(map[string]any)
+	}
+	b.params.LtOr[field] = value
+	return b
+}
+
+// InOr adds IN conditions to the OR group
+func (b *PaginatorBuilder) InOr(field string, values ...any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.InOr == nil {
+		b.params.InOr = make(map[string][]any)
+	}
+	b.params.InOr[field] = append(b.params.InOr[field], values...)
+	return b
+}
+
+// NotInOr adds NOT IN conditions to the OR group
+func (b *PaginatorBuilder) NotInOr(field string, values ...any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	if b.params.NotInOr == nil {
+		b.params.NotInOr = make(map[string][]any)
+	}
+	b.params.NotInOr[field] = append(b.params.NotInOr[field], values...)
+	return b
+}
+
 // WhereLike adds LIKE conditions
 func (b *PaginatorBuilder) WhereLike(field string, values ...string) *PaginatorBuilder {
 	if b.err != nil {
@@ -344,8 +434,6 @@ func (b *PaginatorBuilder) WhereLike(field string, values ...string) *PaginatorB
 	b.params.Like[field] = values
 	return b
 }
-
-
 
 // OrderBy adds sorting
 func (b *PaginatorBuilder) OrderBy(column string, direction ...string) *PaginatorBuilder {
@@ -720,6 +808,78 @@ func (b *PaginatorBuilder) fromMap(data map[string]any) *PaginatorBuilder {
 		}
 	}
 
+	// Handle isnullor
+	if isNullOr, ok := data["isnullor"]; ok {
+		if fields := toStringSlice(isNullOr); len(fields) > 0 {
+			for _, field := range fields {
+				b.WhereIsNullOr(field)
+			}
+		}
+	}
+
+	// Handle isnotnullor
+	if isNotNullOr, ok := data["isnotnullor"]; ok {
+		if fields := toStringSlice(isNotNullOr); len(fields) > 0 {
+			for _, field := range fields {
+				b.WhereIsNotNullOr(field)
+			}
+		}
+	}
+
+	// Handle gteor
+	if gteOr, ok := data["gteor"]; ok {
+		if m, ok := gteOr.(map[string]any); ok {
+			for k, v := range m {
+				b.GteOr(k, v)
+			}
+		}
+	}
+
+	// Handle gtor
+	if gtOr, ok := data["gtor"]; ok {
+		if m, ok := gtOr.(map[string]any); ok {
+			for k, v := range m {
+				b.GtOr(k, v)
+			}
+		}
+	}
+
+	// Handle lteor
+	if lteOr, ok := data["lteor"]; ok {
+		if m, ok := lteOr.(map[string]any); ok {
+			for k, v := range m {
+				b.LteOr(k, v)
+			}
+		}
+	}
+
+	// Handle ltor
+	if ltOr, ok := data["ltor"]; ok {
+		if m, ok := ltOr.(map[string]any); ok {
+			for k, v := range m {
+				b.LtOr(k, v)
+			}
+		}
+	}
+
+	// Handle inor
+	if inOr, ok := data["inor"]; ok {
+		if m, ok := inOr.(map[string]any); ok {
+			for k, v := range m {
+				b.InOr(k, toInterfaceSlice(v)...)
+			}
+		}
+	}
+
+	// Handle notinor
+	if notInOr, ok := data["notinor"]; ok {
+		if m, ok := notInOr.(map[string]any); ok {
+			for k, v := range m {
+				b.NotInOr(k, toInterfaceSlice(v)...)
+			}
+		}
+	}
+
 	// Handle sorting - supports both single sort field and multiple sort fields
 	// New sort pattern takes priority over legacy sort_columns/sort_directions
 	if sort, ok := data["sort"]; ok {
@@ -788,10 +948,10 @@ func (b *PaginatorBuilder) BuildSQL() (string, []any, error) {
 	}
 
 	sql, args := params.GenerateSQL()
-	
+
 	// Log SQL if debug mode is enabled
 	logSQL("BuildSQL", sql, args)
-	
+
 	return sql, args, nil
 }
 
@@ -803,10 +963,10 @@ func (b *PaginatorBuilder) BuildCountSQL() (string, []any, error) {
 	}
 
 	sql, args := params.GenerateCountQuery()
-	
+
 	// Log SQL if debug mode is enabled
 	logSQL("BuildCountSQL", sql, args)
-	
+
 	return sql, args, nil
 }
 
