@@ -37,6 +37,14 @@ type PaginationParams struct {
 	Between        map[string][2]any   `query:"between"`
 	IsNull         []string            `query:"isnull"`
 	IsNotNull      []string            `query:"isnotnull"`
+	GteOr          map[string]any      `query:"gteor"`
+	GtOr           map[string]any      `query:"gtor"`
+	LteOr          map[string]any      `query:"lteor"`
+	LtOr           map[string]any      `query:"ltor"`
+	InOr           map[string][]any    `query:"inor"`
+	NotInOr        map[string][]any    `query:"notinor"`
+	IsNullOr       []string            `query:"isnullor"`
+	IsNotNullOr    []string            `query:"isnotnullor"`
 }
 
 // BindQueryParams binds url.Values to a pagination struct
@@ -285,23 +293,31 @@ func BindQueryStringToStruct(queryString string) (*PaginationParams, error) {
 // NewPaginationParams cria uma nova instância com valores padrão globais
 func NewPaginationParams() *PaginationParams {
 	return &PaginationParams{
-		Page:      1,
-		Limit:     GetDefaultLimit(), // Use global default
-		Like:      make(map[string][]string),
-		LikeOr:    make(map[string][]string),
-		LikeAnd:   make(map[string][]string),
-		Eq:        make(map[string][]any),
-		EqOr:      make(map[string][]any),
-		EqAnd:     make(map[string][]any),
-		Gte:       make(map[string]any),
-		Gt:        make(map[string]any),
-		Lte:       make(map[string]any),
-		Lt:        make(map[string]any),
-		In:        make(map[string][]any),
-		NotIn:     make(map[string][]any),
-		Between:   make(map[string][2]any),
-		IsNull:    make([]string, 0),
-		IsNotNull: make([]string, 0),
+		Page:        1,
+		Limit:       GetDefaultLimit(), // Use global default
+		Like:        make(map[string][]string),
+		LikeOr:      make(map[string][]string),
+		LikeAnd:     make(map[string][]string),
+		Eq:          make(map[string][]any),
+		EqOr:        make(map[string][]any),
+		EqAnd:       make(map[string][]any),
+		Gte:         make(map[string]any),
+		Gt:          make(map[string]any),
+		Lte:         make(map[string]any),
+		Lt:          make(map[string]any),
+		In:          make(map[string][]any),
+		NotIn:       make(map[string][]any),
+		GteOr:       make(map[string]any),
+		GtOr:        make(map[string]any),
+		LteOr:       make(map[string]any),
+		LtOr:        make(map[string]any),
+		InOr:        make(map[string][]any),
+		NotInOr:     make(map[string][]any),
+		IsNullOr:    make([]string, 0),
+		IsNotNullOr: make([]string, 0),
+		Between:     make(map[string][2]any),
+		IsNull:      make([]string, 0),
+		IsNotNull:   make([]string, 0),
 	}
 }
 

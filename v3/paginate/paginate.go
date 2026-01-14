@@ -28,21 +28,30 @@ type QueryParams struct {
 	MapArgs        map[string]any
 	NoOffset       bool
 	// New filter fields
-	Like       map[string][]string
-	LikeOr     map[string][]string
-	LikeAnd    map[string][]string
-	Eq         map[string][]any
-	EqOr       map[string][]any
-	EqAnd      map[string][]any
-	Gte        map[string]any
-	Gt         map[string]any
-	Lte        map[string]any
-	Lt         map[string]any
-	In         map[string][]any
-	NotIn      map[string][]any
-	Between    map[string][2]any
-	IsNull     []string
-	IsNotNull  []string
+	Like      map[string][]string
+	LikeOr    map[string][]string
+	LikeAnd   map[string][]string
+	Eq        map[string][]any
+	EqOr      map[string][]any
+	EqAnd     map[string][]any
+	Gte       map[string]any
+	Gt        map[string]any
+	Lte       map[string]any
+	Lt        map[string]any
+	In        map[string][]any
+	NotIn     map[string][]any
+	Between   map[string][2]any
+	IsNull    []string
+	IsNotNull []string
+	// New OR filter fields
+	GteOr       map[string]any
+	GtOr        map[string]any
+	LteOr       map[string]any
+	LtOr        map[string]any
+	InOr        map[string][]any
+	NotInOr     map[string][]any
+	IsNullOr    []string
+	IsNotNullOr []string
 }
 
 // Option is a function that configures options in QueryParams.
@@ -355,10 +364,10 @@ func (params *QueryParams) GenerateSQL() (string, []any) {
 
 	// Replace placeholders
 	query, args = replacePlaceholders(query, args)
-	
+
 	// Log SQL if debug mode is enabled
 	logSQL("GenerateSQL", query, args)
-	
+
 	return query, args
 }
 
@@ -402,15 +411,15 @@ func (params *QueryParams) GenerateCountQuery() (string, []any) {
 
 	if params.Vacuum {
 		countQuery := "SELECT count_estimate('" + query + "');"
-		countQuery = strings.Replace(countQuery, "COUNT(id)", "1", -1)
+		countQuery = strings.ReplaceAll(countQuery, "COUNT(id)", "1")
 		re := regexp.MustCompile(`(\$[0-9]+)`)
 		countQuery = re.ReplaceAllStringFunc(countQuery, func(match string) string {
 			return "''" + match + "''"
 		})
-		
+
 		// Log SQL if debug mode is enabled
 		logSQL("GenerateCountQuery (Vacuum)", countQuery, args)
-		
+
 		return countQuery, args
 	}
 
@@ -424,6 +433,7 @@ func (params *QueryParams) GenerateCountQuery() (string, []any) {
 func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 	var whereClauses []string
 	var args []any
+	var orClauses []string
 
 	// Search conditions (legacy)
 	if params.Search != "" && len(params.SearchFields) > 0 {
@@ -455,21 +465,6 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 		}
 	}
 
-	// LikeOr conditions
-	if len(params.LikeOr) > 0 {
-		for field, values := range params.LikeOr {
-			columnName := getFieldName(field, "json", "paginate", params.Struct)
-			if columnName != "" && len(values) > 0 {
-				var searchConditions []string
-				for _, value := range values {
-					searchConditions = append(searchConditions, fmt.Sprintf("%s::TEXT ILIKE ?", columnName))
-					args = append(args, "%"+value+"%")
-				}
-				whereClauses = append(whereClauses, "("+strings.Join(searchConditions, " OR ")+")")
-			}
-		}
-	}
-
 	// LikeAnd conditions
 	if len(params.LikeAnd) > 0 {
 		for field, values := range params.LikeAnd {
@@ -488,21 +483,6 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 	// Eq conditions
 	if len(params.Eq) > 0 {
 		for field, values := range params.Eq {
-			columnName := getFieldName(field, "json", "paginate", params.Struct)
-			if columnName != "" && len(values) > 0 {
-				var equalsConditions []string
-				for _, value := range values {
-					equalsConditions = append(equalsConditions, fmt.Sprintf("%s = ?", columnName))
-					args = append(args, value)
-				}
-				whereClauses = append(whereClauses, "("+strings.Join(equalsConditions, " OR ")+")")
-			}
-		}
-	}
-
-	// EqOr conditions
-	if len(params.EqOr) > 0 {
-		for field, values := range params.EqOr {
 			columnName := getFieldName(field, "json", "paginate", params.Struct)
 			if columnName != "" && len(values) > 0 {
 				var equalsConditions []string
@@ -602,6 +582,132 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 				whereClauses = append(whereClauses, fmt.Sprintf("%s NOT IN (%s)", columnName, strings.Join(placeholders, ", ")))
 			}
 		}
+	}
+
+	// Or Grouping logic
+	// LikeOr conditions
+	if len(params.LikeOr) > 0 {
+		for field, values := range params.LikeOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" && len(values) > 0 {
+				for _, value := range values {
+					orClauses = append(orClauses, fmt.Sprintf("%s::TEXT ILIKE ?", columnName))
+					args = append(args, "%"+value+"%")
+				}
+			}
+		}
+	}
+
+	// EqOr conditions
+	if len(params.EqOr) > 0 {
+		for field, values := range params.EqOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" && len(values) > 0 {
+				for _, value := range values {
+					orClauses = append(orClauses, fmt.Sprintf("%s = ?", columnName))
+					args = append(args, value)
+				}
+			}
+		}
+	}
+
+	// GteOr conditions
+	if len(params.GteOr) > 0 {
+		for field, value := range params.GteOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				orClauses = append(orClauses, fmt.Sprintf("%s >= ?", columnName))
+				args = append(args, value)
+			}
+		}
+	}
+
+	// GtOr conditions
+	if len(params.GtOr) > 0 {
+		for field, value := range params.GtOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				orClauses = append(orClauses, fmt.Sprintf("%s > ?", columnName))
+				args = append(args, value)
+			}
+		}
+	}
+
+	// LteOr conditions
+	if len(params.LteOr) > 0 {
+		for field, value := range params.LteOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				orClauses = append(orClauses, fmt.Sprintf("%s <= ?", columnName))
+				args = append(args, value)
+			}
+		}
+	}
+
+	// LtOr conditions
+	if len(params.LtOr) > 0 {
+		for field, value := range params.LtOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				orClauses = append(orClauses, fmt.Sprintf("%s < ?", columnName))
+				args = append(args, value)
+			}
+		}
+	}
+
+	// InOr conditions
+	if len(params.InOr) > 0 {
+		for field, values := range params.InOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" && len(values) > 0 {
+				placeholders := make([]string, len(values))
+				for i := range values {
+					placeholders[i] = "?"
+					args = append(args, values[i])
+				}
+				orClauses = append(orClauses, fmt.Sprintf("%s IN (%s)", columnName, strings.Join(placeholders, ", ")))
+			}
+		}
+	}
+
+	// NotInOr conditions
+	if len(params.NotInOr) > 0 {
+		for field, values := range params.NotInOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" && len(values) > 0 {
+				placeholders := make([]string, len(values))
+				for i := range values {
+					placeholders[i] = "?"
+					args = append(args, values[i])
+				}
+				orClauses = append(orClauses, fmt.Sprintf("%s NOT IN (%s)", columnName, strings.Join(placeholders, ", ")))
+			}
+		}
+	}
+
+	// IsNullOr conditions
+	if len(params.IsNullOr) > 0 {
+		for _, field := range params.IsNullOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				orClauses = append(orClauses, fmt.Sprintf("%s IS NULL", columnName))
+			}
+		}
+	}
+
+	// IsNotNullOr conditions
+	if len(params.IsNotNullOr) > 0 {
+		for _, field := range params.IsNotNullOr {
+			columnName := getFieldName(field, "json", "paginate", params.Struct)
+			if columnName != "" {
+				orClauses = append(orClauses, fmt.Sprintf("%s IS NOT NULL", columnName))
+			}
+		}
+	}
+
+	// Process grouped Or clauses
+	if len(orClauses) > 0 {
+		whereClauses = append(whereClauses, "("+strings.Join(orClauses, " OR ")+")")
 	}
 
 	// Between conditions
