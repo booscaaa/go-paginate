@@ -790,39 +790,51 @@ func (b *PaginatorBuilder) fromMap(data map[string]any) *PaginatorBuilder {
 		}
 	}
 
-	// Handle isnull
-	if isNull, ok := data["isnull"]; ok {
-		if fields := toStringSlice(isNull); len(fields) > 0 {
-			for _, field := range fields {
-				b.WhereIsNull(field)
+	// Handle isnull (both "isnull" and "is_null" for struct compatibility)
+	for _, key := range []string{"isnull", "is_null"} {
+		if isNull, ok := data[key]; ok {
+			if fields := toStringSlice(isNull); len(fields) > 0 {
+				for _, field := range fields {
+					b.WhereIsNull(field)
+				}
 			}
+			break // Only process the first match
 		}
 	}
 
-	// Handle isnotnull
-	if isNotNull, ok := data["isnotnull"]; ok {
-		if fields := toStringSlice(isNotNull); len(fields) > 0 {
-			for _, field := range fields {
-				b.WhereIsNotNull(field)
+	// Handle isnotnull (both "isnotnull" and "is_not_null" for struct compatibility)
+	for _, key := range []string{"isnotnull", "is_not_null"} {
+		if isNotNull, ok := data[key]; ok {
+			if fields := toStringSlice(isNotNull); len(fields) > 0 {
+				for _, field := range fields {
+					b.WhereIsNotNull(field)
+				}
 			}
+			break // Only process the first match
 		}
 	}
 
-	// Handle isnullor
-	if isNullOr, ok := data["isnullor"]; ok {
-		if fields := toStringSlice(isNullOr); len(fields) > 0 {
-			for _, field := range fields {
-				b.WhereIsNullOr(field)
+	// Handle isnullor (both "isnullor" and "is_null_or" for struct compatibility)
+	for _, key := range []string{"isnullor", "is_null_or"} {
+		if isNullOr, ok := data[key]; ok {
+			if fields := toStringSlice(isNullOr); len(fields) > 0 {
+				for _, field := range fields {
+					b.WhereIsNullOr(field)
+				}
 			}
+			break // Only process the first match
 		}
 	}
 
-	// Handle isnotnullor
-	if isNotNullOr, ok := data["isnotnullor"]; ok {
-		if fields := toStringSlice(isNotNullOr); len(fields) > 0 {
-			for _, field := range fields {
-				b.WhereIsNotNullOr(field)
+	// Handle isnotnullor (both "isnotnullor" and "is_not_null_or" for struct compatibility)
+	for _, key := range []string{"isnotnullor", "is_not_null_or"} {
+		if isNotNullOr, ok := data[key]; ok {
+			if fields := toStringSlice(isNotNullOr); len(fields) > 0 {
+				for _, field := range fields {
+					b.WhereIsNotNullOr(field)
+				}
 			}
+			break // Only process the first match
 		}
 	}
 
