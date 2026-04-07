@@ -8,11 +8,15 @@ import (
 	"github.com/booscaaa/go-paginate/v4/paginate"
 )
 
+func params(page, limit int) *paginate.PaginationParams {
+	return &paginate.PaginationParams{Page: page, Limit: limit}
+}
+
 func TestNewPage_MiddlePage(t *testing.T) {
 	base, _ := url.Parse("https://api.example.com/users?limit=10&sort=name")
 	items := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
 
-	page := paginate.NewPage(items, 95, 3, 10, base)
+	page := paginate.NewPage(items, 95, params(3, 10), base)
 
 	if page.Meta.CurrentPage != 3 {
 		t.Errorf("expected current_page 3, got %d", page.Meta.CurrentPage)
@@ -44,7 +48,7 @@ func TestNewPage_FirstPage(t *testing.T) {
 	base, _ := url.Parse("https://api.example.com/users?limit=10")
 	items := []string{"a", "b"}
 
-	page := paginate.NewPage(items, 25, 1, 10, base)
+	page := paginate.NewPage(items, 25, params(1, 10), base)
 
 	if page.Meta.HasPrev {
 		t.Error("expected has_prev false on first page")
@@ -64,7 +68,7 @@ func TestNewPage_LastPage(t *testing.T) {
 	base, _ := url.Parse("https://api.example.com/users")
 	items := []string{"z"}
 
-	page := paginate.NewPage(items, 21, 3, 10, base)
+	page := paginate.NewPage(items, 21, params(3, 10), base)
 
 	if page.Meta.HasNext {
 		t.Error("expected has_next false on last page")
@@ -81,7 +85,7 @@ func TestNewPage_EmptyData(t *testing.T) {
 	base, _ := url.Parse("https://api.example.com/users")
 	items := []string{}
 
-	page := paginate.NewPage(items, 0, 1, 10, base)
+	page := paginate.NewPage(items, 0, params(1, 10), base)
 
 	if page.Meta.From != 0 {
 		t.Errorf("expected from 0 for empty result, got %d", page.Meta.From)
@@ -98,7 +102,7 @@ func TestNewPage_QueryParamsPreserved(t *testing.T) {
 	base, _ := url.Parse("https://api.example.com/users?limit=5&sort=name&filter=active")
 	items := []int{1, 2, 3, 4, 5}
 
-	page := paginate.NewPage(items, 20, 2, 5, base)
+	page := paginate.NewPage(items, 20, params(2, 5), base)
 
 	parsedSelf, _ := url.Parse(page.Links.Self)
 	if parsedSelf.Query().Get("limit") != "5" {
@@ -130,7 +134,7 @@ func TestNewPage_JSONSerialization(t *testing.T) {
 	}
 	items := []Item{{ID: 1, Name: "foo"}, {ID: 2, Name: "bar"}}
 
-	page := paginate.NewPage(items, 50, 1, 10, base)
+	page := paginate.NewPage(items, 50, params(1, 10), base)
 
 	data, err := json.Marshal(page)
 	if err != nil {
@@ -156,5 +160,20 @@ func TestNewPage_JSONSerialization(t *testing.T) {
 	links := decoded["links"].(map[string]any)
 	if _, ok := links["prev"]; !ok {
 		t.Error("expected 'prev' key present in links (as null), not omitted")
+	}
+}
+
+func TestNewPage_DefaultsFromParams(t *testing.T) {
+	base, _ := url.Parse("https://api.example.com/users")
+	items := []string{"a"}
+
+	// page=0 and limit=0 should fall back to defaults
+	page := paginate.NewPage(items, 5, &paginate.PaginationParams{Page: 0, Limit: 0}, base)
+
+	if page.Meta.CurrentPage != 1 {
+		t.Errorf("expected default page=1, got %d", page.Meta.CurrentPage)
+	}
+	if page.Meta.PerPage <= 0 {
+		t.Errorf("expected positive per_page from global default, got %d", page.Meta.PerPage)
 	}
 }

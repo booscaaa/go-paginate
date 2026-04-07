@@ -38,7 +38,20 @@ type PageLinks struct {
 // NewPage constructs a Page[T] with full metadata and HATEOAS links.
 // baseURL should be the current request URL (*http.Request).URL — all existing
 // query params (filters, sorts, limit) are preserved; only ?page=N is rewritten.
-func NewPage[T any](data []T, totalItems, page, perPage int, baseURL *url.URL) Page[T] {
+//
+// page and perPage are derived from params automatically:
+//   - page    ← params.Page  (defaults to 1)
+//   - perPage ← params.Limit (defaults to GetDefaultLimit())
+func NewPage[T any](data []T, totalItems int, params *PaginationParams, baseURL *url.URL) Page[T] {
+	page := params.Page
+	if page < 1 {
+		page = 1
+	}
+	perPage := params.Limit
+	if perPage <= 0 {
+		perPage = GetDefaultLimit()
+	}
+
 	totalPages := int(math.Ceil(float64(totalItems) / float64(perPage)))
 	if totalPages == 0 {
 		totalPages = 1
