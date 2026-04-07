@@ -50,6 +50,14 @@ type QueryParams struct {
 	NotInOr        map[string][]any
 	IsNullOr       []string
 	IsNotNullOr    []string
+	// Single-column cursor (backward compat for direct After/Before calls)
+	CursorColumn    string
+	CursorValue     any
+	// Multi-column keyset cursor (used when cursor comes from NewCursorPage token)
+	CursorColumns   []string
+	CursorValues    []any
+	CursorSortDirs  []string // sort direction per column: "ASC" or "DESC"
+	CursorDirection string   // pagination direction: "after" or "before"
 }
 
 // GenerateSQL generates the paginated SQL query and its arguments.
@@ -388,7 +396,83 @@ func (params *QueryParams) buildWhereClauses() ([]string, []any) {
 		args = append(args, params.WhereArgs...)
 	}
 
+	// Multi-column keyset cursor (seek method — 100% stable with multi-sort)
+	if len(params.CursorColumns) > 0 && len(params.CursorValues) > 0 {
+		ks, ksArgs := params.buildCursorWhereMulti()
+		whereClauses = append(whereClauses, ks...)
+		args = append(args, ksArgs...)
+	} else if params.CursorColumn != "" && params.CursorValue != nil {
+		// Single-column backward compat (direct After/Before calls)
+		columnName := getFieldName(params.CursorColumn, "json", "paginate", params.Struct)
+		if params.CursorDirection == "before" {
+			whereClauses = append(whereClauses, fmt.Sprintf("%s < ?", columnName))
+		} else {
+			whereClauses = append(whereClauses, fmt.Sprintf("%s > ?", columnName))
+		}
+		args = append(args, params.CursorValue)
+	}
+
 	return whereClauses, args
+}
+
+// buildCursorWhereMulti generates the keyset pagination WHERE clause for multi-column sorts.
+//
+// For cols=["created_at","id"], vals=[t,42], sortDirs=["DESC","ASC"], dir="after":
+//
+//	((created_at < $1) OR (created_at = $2 AND id > $3))
+func (params *QueryParams) buildCursorWhereMulti() ([]string, []any) {
+	cols := params.CursorColumns
+	vals := params.CursorValues
+	sortDirs := params.CursorSortDirs
+	dir := params.CursorDirection
+
+	var orClauses []string
+	var args []any
+
+	for i := range cols {
+		colName := getFieldName(cols[i], "json", "paginate", params.Struct)
+		sortDir := "ASC"
+		if i < len(sortDirs) {
+			sortDir = strings.ToUpper(sortDirs[i])
+		}
+		op := cursorCompareOp(dir, sortDir)
+
+		var parts []string
+		for j := 0; j < i; j++ {
+			prev := getFieldName(cols[j], "json", "paginate", params.Struct)
+			parts = append(parts, fmt.Sprintf("%s = ?", prev))
+			args = append(args, vals[j])
+		}
+		parts = append(parts, fmt.Sprintf("%s %s ?", colName, op))
+		args = append(args, vals[i])
+
+		orClauses = append(orClauses, "("+strings.Join(parts, " AND ")+")")
+	}
+
+	clause := strings.Join(orClauses, " OR ")
+	if len(orClauses) > 1 {
+		clause = "(" + clause + ")"
+	}
+	return []string{clause}, args
+}
+
+// cursorCompareOp returns the SQL comparison operator for a cursor column.
+//
+//	after  + ASC  → >   (rows after last seen, ascending)
+//	after  + DESC → <   (rows after last seen, descending)
+//	before + ASC  → <   (rows before first seen, ascending)
+//	before + DESC → >   (rows before first seen, descending)
+func cursorCompareOp(paginDir, sortDir string) string {
+	if paginDir == "before" {
+		if sortDir == "DESC" {
+			return ">"
+		}
+		return "<"
+	}
+	if sortDir == "DESC" {
+		return "<"
+	}
+	return ">"
 }
 
 func (params *QueryParams) buildOrderClause() string {
