@@ -1205,7 +1205,7 @@ func structToMap(structData any) (map[string]any, error) {
 			continue
 		}
 
-		// Get field name from json tag or field name
+		// Get field name from json tag, query tag, or field name
 		fieldName := fieldType.Name
 		if jsonTag := fieldType.Tag.Get("json"); jsonTag != "" {
 			// Handle json tag with options like "field_name,omitempty"
@@ -1216,6 +1216,12 @@ func structToMap(structData any) (map[string]any, error) {
 			// Skip fields marked with json:"-"
 			if tagParts[0] == "-" {
 				continue
+			}
+		} else if queryTag := fieldType.Tag.Get("query"); queryTag != "" {
+			// Fall back to query tag (used by PaginationParams)
+			tagParts := strings.Split(queryTag, ",")
+			if tagParts[0] != "" && tagParts[0] != "-" {
+				fieldName = tagParts[0]
 			}
 		}
 
