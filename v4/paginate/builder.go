@@ -487,6 +487,32 @@ func (b *PaginatorBuilder) WithoutOffset() *PaginatorBuilder {
 	return b
 }
 
+// After sets a forward cursor: adds WHERE column > value and disables OFFSET.
+// Use together with OrderBy(column, "ASC") for stable results.
+func (b *PaginatorBuilder) After(column string, value any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.params.CursorColumn = column
+	b.params.CursorValue = value
+	b.params.CursorDirection = "after"
+	b.params.NoOffset = true
+	return b
+}
+
+// Before sets a backward cursor: adds WHERE column < value and disables OFFSET.
+// Use together with OrderBy(column, "DESC") for stable results.
+func (b *PaginatorBuilder) Before(column string, value any) *PaginatorBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.params.CursorColumn = column
+	b.params.CursorValue = value
+	b.params.CursorDirection = "before"
+	b.params.NoOffset = true
+	return b
+}
+
 // WithVacuum enables vacuum mode
 func (b *PaginatorBuilder) WithVacuum() *PaginatorBuilder {
 	if b.err != nil {
@@ -940,6 +966,29 @@ func (b *PaginatorBuilder) fromMap(data map[string]any) *PaginatorBuilder {
 		}
 	}
 
+	// Handle cursor (opaque base64 token produced by NewCursorPage / EncodeCursor)
+	if cursorRaw, ok := data["cursor"]; ok {
+		if cursorStr, ok := cursorRaw.(string); ok && cursorStr != "" {
+			if ct, err := decodeToken(cursorStr); err == nil {
+				if len(ct.Columns) > 0 && len(ct.Values) > 0 {
+					// Multi-column keyset token (from NewCursorPage)
+					b.params.CursorColumns = ct.Columns
+					b.params.CursorValues = ct.Values
+					b.params.CursorSortDirs = ct.SortDirs
+					b.params.CursorDirection = ct.Direction
+					b.params.NoOffset = true
+				} else if ct.Column != "" {
+					// Single-column token (backward compat / EncodeCursor)
+					if ct.Direction == "before" {
+						b.Before(ct.Column, ct.Value)
+					} else {
+						b.After(ct.Column, ct.Value)
+					}
+				}
+			}
+		}
+	}
+
 	// Handle sorting - supports both single sort field and multiple sort fields
 	// New sort pattern takes priority over legacy sort_columns/sort_directions
 	if sort, ok := data["sort"]; ok {
@@ -982,52 +1031,70 @@ func (b *PaginatorBuilder) fromMap(data map[string]any) *PaginatorBuilder {
 	return b
 }
 
-// Build creates the QueryParams and validates it
-func (b *PaginatorBuilder) Build() (*QueryParams, error) {
+// SQLResult holds the generated main query and count query together.
+type SQLResult struct {
+	Query      string
+	Args       []any
+	CountQuery string
+	CountArgs  []any
+}
+
+// build validates the builder state and returns the internal QueryParams.
+func (b *PaginatorBuilder) build() (*QueryParams, error) {
 	if b.err != nil {
 		return nil, b.err
 	}
-
-	// Validation
 	if b.params.Table == "" {
 		return nil, errors.New("table is required")
 	}
-
 	if b.params.Struct == nil {
 		return nil, errors.New("model struct is required")
 	}
-
 	return b.params, nil
 }
 
-// BuildSQL generates the SQL query directly
+// BuildSQL generates the paginated SELECT query and its arguments.
 func (b *PaginatorBuilder) BuildSQL() (string, []any, error) {
-	params, err := b.Build()
+	params, err := b.build()
 	if err != nil {
 		return "", nil, err
 	}
-
 	sql, args := params.GenerateSQL()
-
-	// Log SQL if debug mode is enabled
 	logSQL("BuildSQL", sql, args)
-
 	return sql, args, nil
 }
 
-// BuildCountSQL generates the count SQL query directly
+// BuildCountSQL generates the SELECT COUNT query and its arguments.
 func (b *PaginatorBuilder) BuildCountSQL() (string, []any, error) {
-	params, err := b.Build()
+	params, err := b.build()
 	if err != nil {
 		return "", nil, err
 	}
-
 	sql, args := params.GenerateCountQuery()
-
-	// Log SQL if debug mode is enabled
 	logSQL("BuildCountSQL", sql, args)
-
 	return sql, args, nil
+}
+
+// Build generates both the paginated SELECT query and the COUNT query in one call.
+//
+//	result, err := b.Build()
+//	rows, _  := db.Query(result.Query, result.Args...)
+//	total, _ := db.QueryRow(result.CountQuery, result.CountArgs...).Scan(&n)
+func (b *PaginatorBuilder) Build() (*SQLResult, error) {
+	params, err := b.build()
+	if err != nil {
+		return nil, err
+	}
+	query, args := params.GenerateSQL()
+	countQuery, countArgs := params.GenerateCountQuery()
+	logSQL("Build (query)", query, args)
+	logSQL("Build (count)", countQuery, countArgs)
+	return &SQLResult{
+		Query:      query,
+		Args:       args,
+		CountQuery: countQuery,
+		CountArgs:  countArgs,
+	}, nil
 }
 
 // CurrentPage returns the current page number set in the builder.
