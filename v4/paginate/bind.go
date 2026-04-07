@@ -45,6 +45,7 @@ type PaginationParams struct {
 	NotInOr        map[string][]any    `query:"notinor"`
 	IsNullOr       []string            `query:"isnullor"`
 	IsNotNullOr    []string            `query:"isnotnullor"`
+	Cursor         string              `query:"cursor"`
 }
 
 // BindQueryParams binds url.Values to a pagination struct
@@ -57,7 +58,7 @@ func BindQueryParams(queryParams url.Values, target any) error {
 	v = v.Elem()
 	t := v.Type()
 
-	// Inicializar maps se necessário
+	// Initialize map fields before binding.
 	initializeMaps(v, t)
 
 	for i := 0; i < v.NumField(); i++ {
@@ -89,7 +90,7 @@ func BindQueryParams(queryParams url.Values, target any) error {
 	return nil
 }
 
-// initializeMaps inicializa os campos de map se eles forem nil
+// initializeMaps initializes map fields that are nil.
 func initializeMaps(v reflect.Value, t reflect.Type) {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
@@ -108,12 +109,12 @@ func initializeMaps(v reflect.Value, t reflect.Type) {
 	}
 }
 
-// isMapField verifica se o campo é um map
+// isMapField reports whether t is a map type.
 func isMapField(t reflect.Type) bool {
 	return t.Kind() == reflect.Map
 }
 
-// bindMapField faz bind de parâmetros com sintaxe de array para campos de map
+// bindMapField binds query parameters with bracket syntax (e.g. filter[key]=value) into a map field.
 func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) {
 	if !field.CanSet() || field.Kind() != reflect.Map {
 		return
@@ -123,27 +124,27 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 	keyType := mapType.Key()
 	valueType := mapType.Elem()
 
-	// Procurar por parâmetros com formato: queryTag[key]=value
+	// Look for parameters with the format: queryTag[key]=value
 	prefix := queryTag + "["
 	for paramName, values := range queryParams {
 		if strings.HasPrefix(paramName, prefix) && strings.HasSuffix(paramName, "]") {
-			// Extrair a chave do parâmetro
+			// Extract the key from the parameter name
 			key := paramName[len(prefix) : len(paramName)-1]
 			if key == "" {
 				continue
 			}
 
-			// Converter a chave para o tipo correto
+			// Convert the key to the correct type
 			keyValue := reflect.ValueOf(key)
 			if keyType.Kind() != reflect.String {
-				continue // Por enquanto, só suportamos chaves string
+				continue // only string keys are supported
 			}
 
-			// Converter os valores para o tipo correto
+			// Convert the values to the correct type
 			var mapValue reflect.Value
 			switch valueType.Kind() {
 			case reflect.Array:
-				// Para arrays fixos como [2]any (usado em Between)
+				// Fixed-size arrays such as [2]any (used by Between)
 				if valueType.Len() == 2 && len(values) >= 2 {
 					arrayValue := reflect.New(valueType).Elem()
 					for i := 0; i < 2 && i < len(values); i++ {
@@ -168,7 +169,7 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 					mapValue = arrayValue
 				}
 			case reflect.Slice:
-				// Para []string ou []any
+				// []string or []any
 				sliceType := valueType.Elem()
 				slice := reflect.MakeSlice(valueType, 0, len(values))
 				for _, value := range values {
@@ -191,7 +192,7 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 				}
 				mapValue = slice
 			case reflect.Interface:
-				// Para any, usar o primeiro valor
+				// any: use the first value
 				if len(values) > 0 {
 					value := values[0]
 					// Try to convert to number first, then boolean, otherwise keep as string
@@ -206,7 +207,7 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 					}
 				}
 			default:
-				continue // Tipo não suportado
+				continue // unsupported type
 			}
 
 			if mapValue.IsValid() {
@@ -216,7 +217,7 @@ func bindMapField(queryParams url.Values, field reflect.Value, queryTag string) 
 	}
 }
 
-// setFieldValue define o valor de um campo baseado nos valores dos query params
+// setFieldValue sets a struct field value from the given query param string values.
 func setFieldValue(field reflect.Value, values []string) error {
 	if len(values) == 0 {
 		return nil
@@ -234,11 +235,10 @@ func setFieldValue(field reflect.Value, values []string) error {
 			field.SetBool(boolVal)
 		}
 	case reflect.Slice:
-		// Para slices, usar todos os valores ou dividir por vírgula se for um único valor
+		// For slices, use all values or split a single comma-separated value.
 		var finalValues []string
 		if len(values) == 1 && strings.Contains(values[0], ",") {
 			finalValues = strings.Split(values[0], ",")
-			// Remover espaços em branco
 			for i, v := range finalValues {
 				finalValues[i] = strings.TrimSpace(v)
 			}
@@ -258,13 +258,13 @@ func setFieldValue(field reflect.Value, values []string) error {
 	return nil
 }
 
-// BindQueryParamsToStruct é uma função de conveniência que cria uma nova instância de PaginationParams
-// e faz bind dos query params para ela
+// BindQueryParamsToStruct creates a new PaginationParams instance and binds the given
+// URL query values into it.
 func BindQueryParamsToStruct(queryParams url.Values) (*PaginationParams, error) {
 	params := &PaginationParams{
-		Page:         1,  // valor padrão
-		Limit:        10, // valor padrão
-		ItemsPerPage: 10, // valor padrão
+		Page:         1,
+		Limit:        10,
+		ItemsPerPage: 10,
 	}
 
 	err := BindQueryParams(queryParams, params)
@@ -280,7 +280,7 @@ func BindQueryParamsToStruct(queryParams url.Values) (*PaginationParams, error) 
 	return params, nil
 }
 
-// BindQueryStringToStruct faz bind de uma query string para PaginationParams
+// BindQueryStringToStruct parses a raw query string and binds it into a new PaginationParams.
 func BindQueryStringToStruct(queryString string) (*PaginationParams, error) {
 	queryParams, err := url.ParseQuery(queryString)
 	if err != nil {
@@ -290,7 +290,7 @@ func BindQueryStringToStruct(queryString string) (*PaginationParams, error) {
 	return BindQueryParamsToStruct(queryParams)
 }
 
-// NewPaginationParams cria uma nova instância com valores padrão globais
+// NewPaginationParams creates a new PaginationParams with global default values and initialized maps.
 func NewPaginationParams() *PaginationParams {
 	return &PaginationParams{
 		Page:        1,
@@ -321,7 +321,7 @@ func NewPaginationParams() *PaginationParams {
 	}
 }
 
-// setDefaultValues define valores padrão usando configuração global
+// setDefaultValues applies global configuration defaults to params.
 func setDefaultValues(params *PaginationParams) {
 	if params.Page == 0 {
 		params.Page = 1
